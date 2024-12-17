@@ -13,7 +13,6 @@ public class ServerDoubleExit implements Server{
 
     public void checkPMVAvail(VehicleID vhID)
             throws PMVNotAvailException, ConnectException{
-
     }
     public void registerPairing(UserAccount user, VehicleID veh, StationID st,
                          GeographicPoint loc, LocalDateTime date)
@@ -29,8 +28,7 @@ public class ServerDoubleExit implements Server{
     }
     // Internal operations
     public void setPairing(UserAccount user, VehicleID veh, StationID st,
-                    GeographicPoint loc, LocalDateTime
-                            date){
+                    GeographicPoint loc, LocalDateTime date){
 
     }
     public void unPairRegisterService(UserAccount user, VehicleID veh, StationID st, GeographicPoint loc, LocalDateTime date) throws PairingNotFoundException{

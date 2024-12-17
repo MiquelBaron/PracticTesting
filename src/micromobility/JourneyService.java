@@ -18,6 +18,9 @@ public class JourneyService {
     private GeographicPoint endPoint;
     private BigDecimal importAmount;
     private boolean inProgress;
+    private StationID originStation;
+    private StationID endStation;
+
 
     // Constructor
     public JourneyService(LocalDateTime initDate, int initHour, GeographicPoint originPoint) {
@@ -30,6 +33,22 @@ public class JourneyService {
     // Getters y setters
     public LocalDateTime getInitDate() {
         return initDate;
+    }
+
+    public void setEndStation(StationID endStation) {
+        this.endStation = endStation;
+    }
+
+    public StationID getEndStation() {
+        return endStation;
+    }
+    public StationID getOriginStation(){
+        return originStation;
+    }
+    public StationID setOriginStation(StationID originStation){ this.originStation = originStation }
+
+    public boolean isInProgress() {
+        return inProgress;
     }
 
     public void setInitDate(LocalDateTime initDate) {

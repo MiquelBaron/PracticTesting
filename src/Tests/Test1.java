@@ -23,8 +23,6 @@ public class Test1 {
          journeyRealizeHandler = new JourneyRealizeHandler();
          serverExit = new ServerDoubleExit();
          serverFail = new ServerDoubleFail();
-
-
     }
 
     @Test

@@ -21,7 +21,7 @@ public class JourneyRealizeHandler {
     Server server;
     UnbondedBTSignal unbondedBTSignal;
     JourneyService journeyService;
-    BufferedImage bufferedImage;
+    private BufferedImage bufferedImage;
     private float avSpeed;
     private float dist;
     private int duration;
@@ -31,6 +31,10 @@ public class JourneyRealizeHandler {
     private GeographicPoint geographicPoint;
     private StationID stationID;
     private PMVehicle pmVehicle;
+    private PMVState pmvState;
+    private boolean delimitedZone;
+
+
 
     //Setters
     public void setArduinoMicroController(ArduinoMicroController arduinoMicroController){
@@ -50,8 +54,15 @@ public class JourneyRealizeHandler {
 
 
 
+
+
     public void scanQR()
             throws ConnectException, InvalidPairingArgsException, CorruptedImgException, PMVNotAvailException, ProceduralException {
+        journeyService.setOriginStation(this.stationID);
+
+        if( !journeyService.getOriginStation().equals(stationID) || !delimitedZone){
+            throw new ProceduralException("Procedural exception");
+        }
 
         this.vehicleID = qrDecoder.getVehicleID(this.bufferedImage);
 
@@ -61,6 +72,8 @@ public class JourneyRealizeHandler {
         GeographicPoint loc=pmVehicle1.getGeographicPoint();
 
         LocalDateTime time = LocalDateTime.now();
+        journeyService.setInitDate(time);
+        journeyService.setInitHour(time.getHour());
 
         server.registerPairing(userAccount, vehicleID, this.stationID, loc, time);
         pmVehicle1.setNotAvailb();
@@ -69,19 +82,23 @@ public class JourneyRealizeHandler {
 
 
 
-    public void unPairVehicle ()
-            throws ConnectException, InvalidPairingArgsException,
-            PairingNotFoundException, ProceduralException{
-        //calculateValues(journeyService.getOriginPoint(),journeyService.getEndDate());
-        //calculateImport(journeyService.getDistance(), journeyService.getDuration(), journeyService.getAvgSpeed(), journeyService.getEndDate());
+    public void unPairVehicle () throws ConnectException, InvalidPairingArgsException, PairingNotFoundException, ProceduralException{
+        journeyService.setEndStation(this.stationID);
+        if(!this.journeyService.getEndStation().equals(stationID) || !delimitedZone || !journeyService.isInProgress() || !pmVehicle.getState().equals(pmvState.UnderWay)){
+            throw new ProceduralException("Procedural exception");
+        }
+
         PMVehicle pmVehicle1 = new PMVehicle(this.vehicleID);
         GeographicPoint loc = pmVehicle1.getGeographicPoint();
         server.stopPairing(this.userAccount, this.vehicleID, this.stationID,loc,  LocalDateTime.now(), avSpeed, dist, duration, imp);
+
+
     }
     public void broadcastStationID (StationID stID) throws ConnectException{
         unbondedBTSignal.BTbroadcast();
         this.stationID=stID;
     }
+
     // Input events from the Arduino microcontroller channel
     public void startDriving ()
             throws ConnectException, ProceduralException {
