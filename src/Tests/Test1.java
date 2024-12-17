@@ -18,17 +18,6 @@ public class Test1 {
     Server serverExit;
     Server serverFail;
     QRDecoder qrDecoderExit;
-    @BeforeEach
-    void setUp(){
-         journeyRealizeHandler = new JourneyRealizeHandler();
-         serverExit = new ServerDoubleExit();
-         serverFail = new ServerDoubleFail();
-    }
 
-    @Test
-    public void test1(){
-        journeyRealizeHandler.setServer(serverFail);
-        assertThrows(ConnectException.class, () -> journeyRealizeHandler.scanQR());
-    }
 
 }

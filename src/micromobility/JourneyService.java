@@ -1,12 +1,13 @@
 package micromobility;
 
-import data.*;
+import data.GeographicPoint;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class JourneyService {
 
+    // Atributos de la clase
     private LocalDateTime initDate;
     private LocalDateTime endDate;
     private int initHour;
@@ -18,37 +19,26 @@ public class JourneyService {
     private GeographicPoint endPoint;
     private BigDecimal importAmount;
     private boolean inProgress;
-    private StationID originStation;
-    private StationID endStation;
 
 
-    // Constructor
-    public JourneyService(LocalDateTime initDate, int initHour, GeographicPoint originPoint) {
-        this.initDate = initDate;
-        this.initHour = initHour;
-        this.originPoint = originPoint;
-        this.inProgress = true;
+    public JourneyService() {
+        this.initDate = null;
+        this.endDate = null;
+        this.initHour = 0;
+        this.endHour = 0;
+        this.duration = 0;
+        this.distance = 0.0f;
+        this.avgSpeed = 0.0f;
+        this.originPoint = null;
+        this.endPoint = null;
+        this.importAmount = BigDecimal.ZERO;
+        this.inProgress = false;
     }
 
-    // Getters y setters
+    // Métodos Getters y Setters
+
     public LocalDateTime getInitDate() {
         return initDate;
-    }
-
-    public void setEndStation(StationID endStation) {
-        this.endStation = endStation;
-    }
-
-    public StationID getEndStation() {
-        return endStation;
-    }
-    public StationID getOriginStation(){
-        return originStation;
-    }
-    public StationID setOriginStation(StationID originStation){ this.originStation = originStation }
-
-    public boolean isInProgress() {
-        return inProgress;
     }
 
     public void setInitDate(LocalDateTime initDate) {
@@ -118,10 +108,20 @@ public class JourneyService {
     public void setEndPoint(GeographicPoint endPoint) {
         this.endPoint = endPoint;
     }
-    public void setInProgress(Boolean progress){
-        this.inProgress=progress;
+
+    public BigDecimal getImportAmount() {
+        return importAmount;
     }
-    public void setImportAmount(BigDecimal amount){
-        this.importAmount=amount;
+
+    public void setImportAmount(BigDecimal importAmount) {
+        this.importAmount = importAmount;
+    }
+
+    public boolean isInProgress() {
+        return inProgress;
+    }
+
+    public void setInProgress(boolean inProgress) {
+        this.inProgress = inProgress;
     }
 }

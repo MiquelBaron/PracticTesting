@@ -16,74 +16,62 @@ import services.smartfeatures.*;
 public class JourneyRealizeHandler {
 
     private static final double EARTH_RADIUS_KM = 6371.0;
-    ArduinoMicroController arduinoMicroController;
-    QRDecoder qrDecoder;
-    Server server;
-    UnbondedBTSignal unbondedBTSignal;
-    JourneyService journeyService;
-    private BufferedImage bufferedImage;
-    private float avSpeed;
-    private float dist;
-    private int duration;
-    private BigDecimal imp;
+    private Server server;
     private UserAccount userAccount;
-    private VehicleID vehicleID;
-    private GeographicPoint geographicPoint;
-    private StationID stationID;
+    private QRDecoder qrDecoder;
+    private UnbondedBTSignal unbondedBTSignal;
+    private JourneyService journeyService;
+    private ArduinoMicroController arduinoMicroController;
     private PMVehicle pmVehicle;
-    private PMVState pmvState;
+    private VehicleID vehicleID;
+    private BufferedImage bufferedImage;
+    private StationID stationID;
     private boolean delimitedZone;
 
-
-
-    //Setters
-    public void setArduinoMicroController(ArduinoMicroController arduinoMicroController){
-        this.arduinoMicroController = arduinoMicroController;
-    }
-
-    public void setQrDecoder(QRDecoder qrDecoder){
+    public JourneyRealizeHandler(StationID stationId, QRDecoder qrDecoder, UnbondedBTSignal btSignal, Server server, UserAccount userAccount) {
+        this.stationID = stationId;
         this.qrDecoder = qrDecoder;
-    }
-    public void setServer(Server server){
+        this.unbondedBTSignal = btSignal;
         this.server = server;
+        this.delimitedZone = true;
+        this.userAccount=userAccount;
     }
-    public void setUnbondedBTSignal(UnbondedBTSignal unbondedBTSignal){
-        this.unbondedBTSignal=unbondedBTSignal;
-    }
-    public void setBufferedImage(BufferedImage bufferedImage){ this.bufferedImage=bufferedImage;}
 
-
-
-
+    private void setDelimitedZone(Boolean aux){ this.delimitedZone=aux}
 
     public void scanQR()
             throws ConnectException, InvalidPairingArgsException, CorruptedImgException, PMVNotAvailException, ProceduralException {
-        journeyService.setOriginStation(this.stationID);
 
-        if( !journeyService.getOriginStation().equals(stationID) || !delimitedZone){
+        if(stationID==null || !delimitedZone){
             throw new ProceduralException("Procedural exception");
         }
 
-        this.vehicleID = qrDecoder.getVehicleID(this.bufferedImage);
-
+        this.vehicleID = qrDecoder.getVehicleID(this.bufferedImage); //VehicleId
         server.checkPMVAvail(vehicleID);
 
-        PMVehicle pmVehicle1 = new PMVehicle(vehicleID);
-        GeographicPoint loc=pmVehicle1.getGeographicPoint();
+        this.journeyService = new JourneyService();
 
-        LocalDateTime time = LocalDateTime.now();
-        journeyService.setInitDate(time);
-        journeyService.setInitHour(time.getHour());
+        arduinoMicroController.setBTconnection();
 
-        server.registerPairing(userAccount, vehicleID, this.stationID, loc, time);
-        pmVehicle1.setNotAvailb();
+        this.pmVehicle=new PMVehicle(vehicleID);
+        GeographicPoint loc=pmVehicle.getGeographicPoint();
+
+        LocalDateTime date = LocalDateTime.now();
+
+        pmVehicle.setNotAvailb();
+
+        journeyService.setInitDate(date);
+        journeyService.setOriginPoint(loc);
+        journeyService.setInitHour(date.getHour());
+
+        server.registerPairing(userAccount, vehicleID, stationID, loc, date);
+        //FALTA ASSOCIAR LA INSTANCIA DE JourneyService AMB VEHICLE I USUARI
     }
 
 
 
 
     public void unPairVehicle () throws ConnectException, InvalidPairingArgsException, PairingNotFoundException, ProceduralException{
-        journeyService.setEndStation(this.stationID);
         if(!this.journeyService.getEndStation().equals(stationID) || !delimitedZone || !journeyService.isInProgress() || !pmVehicle.getState().equals(pmvState.UnderWay)){
             throw new ProceduralException("Procedural exception");
         }
@@ -121,16 +109,7 @@ public class JourneyRealizeHandler {
         this.pmVehicle.setAvailb();
     }
     // Internal operations
-    private void calculateValues (GeographicPoint gP, LocalDateTime date){
-        GeographicPoint puntInici = journeyService.getOriginPoint();
-        LocalDateTime dataInici = journeyService.getInitDate();
-        int duration = calculateDuration(dataInici, date);
-        Float distance = calculateDistance(puntInici, gP);
-    }
-    private void calculateImport (float dis, int dur, float avSp,
-                                  LocalDateTime date){
 
-    }
 
     private Float calculateDistance(GeographicPoint point1, GeographicPoint point2){
         double lat1Rad = Math.toRadians(point1.getLatitude());

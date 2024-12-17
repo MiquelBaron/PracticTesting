@@ -8,8 +8,6 @@ import java.net.ConnectException;
 import java.time.LocalDateTime;
 
 public class ServerDoubleExit implements Server{
-    private boolean avail = false;
-
 
     public void checkPMVAvail(VehicleID vhID)
             throws PMVNotAvailException, ConnectException{
@@ -23,7 +21,7 @@ public class ServerDoubleExit implements Server{
                             GeographicPoint loc, LocalDateTime date, float avSp, float dist,
                             int dur, BigDecimal imp)
             throws InvalidPairingArgsException, ConnectException{
-        this.avail=true;
+
 
     }
     // Internal operations
@@ -36,9 +34,6 @@ public class ServerDoubleExit implements Server{
     }
     public void registerLocation(VehicleID veh, StationID st){
 
-    }
-    private void setAvail(Boolean avail){
-        this.avail=avail;
     }
 }
 
