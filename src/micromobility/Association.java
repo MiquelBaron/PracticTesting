@@ -24,4 +24,16 @@ public class Association {
     public JourneyService getJourneyService() {
         return journeyService;
     }
+
+    public void setJourneyService(JourneyService journeyService) {
+        this.journeyService = journeyService;
+    }
+
+    public void setUserAccount(UserAccount userAccount) {
+        this.userAccount = userAccount;
+    }
+
+    public void setVehicleID(VehicleID vehicleID) {
+        this.vehicleID = vehicleID;
+    }
 }
