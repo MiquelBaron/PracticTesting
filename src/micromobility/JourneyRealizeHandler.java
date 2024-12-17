@@ -74,7 +74,7 @@ public class JourneyRealizeHandler {
         server.registerPairing(userAccount, vehicleID, stationID, loc, date);
         association= new Association(userAccount,vehicleID,journeyService);
         associated=true;
-        this.stationID=null; //El tornem a posar a null ja que haurà de guardar el valor de la endStationID. El valor de la originStationID ja l'hem guardat a JourneyService
+        this.stationID=null; //El tornem a posar a null, ja que haurà de guardar el valor de "endStationID". El valor de "originStationID" ja l'hem guardat a JourneyService
     }
 
 
@@ -148,16 +148,15 @@ public class JourneyRealizeHandler {
             throw new ConnectException("Connect exception");
         }
     }
+
+
     // Internal operations
-
-
     private Float calculateDistance(GeographicPoint point1, GeographicPoint point2){
         double lat1Rad = Math.toRadians(point1.getLatitude());
         double lon1Rad = Math.toRadians(point1.getLongitude());
         double lat2Rad = Math.toRadians(point2.getLatitude());
         double lon2Rad = Math.toRadians(point2.getLongitude());
 
-        // Diferencias de latitud y longitud
         double deltaLat = lat2Rad - lat1Rad;
         double deltaLon = lon2Rad - lon1Rad;
 
@@ -168,7 +167,6 @@ public class JourneyRealizeHandler {
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        // Distancia final
         double distance = EARTH_RADIUS_KM * c;
 
         return (float) distance;
