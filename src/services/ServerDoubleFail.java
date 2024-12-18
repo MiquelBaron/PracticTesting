@@ -24,25 +24,28 @@ public class ServerDoubleFail implements Server{
         if (user == null || veh == null || st == null || loc == null || date == null) {
             throw new InvalidPairingArgsException("Invalid arguments");
         }
+        setPairing(user,veh,st,loc,date);
         throw new ConnectException("Connect exception");
 
     }
     public void stopPairing(UserAccount user, VehicleID veh, StationID st,
                             GeographicPoint loc, LocalDateTime date, float avSp, float dist,
-                            int dur, BigDecimal imp) throws InvalidPairingArgsException, ConnectException, PairingNotFoundException {
+                            int dur, BigDecimal imp) throws InvalidPairingArgsException, ConnectException{
         if (user == null || veh == null || st == null || loc == null || date == null || imp==null) {
             throw new InvalidPairingArgsException("Invalid arguments");
         }
         if(connectException) {
             throw new ConnectException("Connect exception");
         }
-        unPairRegisterService(user, veh,st, loc, date);
+        try {
+            unPairRegisterService(user, veh, st, loc, date);
+        }catch(PairingNotFoundException e){
+            throw new InvalidPairingArgsException("Exception");
+        }
     }
     // Internal operations
     public void setPairing(UserAccount user, VehicleID veh, StationID st,
-                    GeographicPoint loc, LocalDateTime
-                            date){
-
+                    GeographicPoint loc, LocalDateTime date){
     }
     public void unPairRegisterService(UserAccount user, VehicleID veh, StationID st, GeographicPoint loc, LocalDateTime date) throws PairingNotFoundException{
         throw new PairingNotFoundException("Pairing not found between user "+user.getId()+" and vehicle "+veh.getId());

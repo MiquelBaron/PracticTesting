@@ -1,6 +1,8 @@
 package micromobility;
 
 import data.GeographicPoint;
+import data.UserAccount;
+import data.VehicleID;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -8,6 +10,9 @@ import java.time.LocalDateTime;
 public class JourneyService {
 
     // Atributos de la clase
+    private UserAccount userAccount;
+    private VehicleID vehicleID;
+
     private LocalDateTime initDate;
     private LocalDateTime endDate;
     private int initHour;
@@ -35,7 +40,21 @@ public class JourneyService {
         this.inProgress = false;
     }
 
-    // Métodos Getters y Setters
+    //Injectar dependències
+    public void setUserAccount(UserAccount userAccount){
+        this.userAccount=userAccount;
+    }
+    public void setVehicleID(VehicleID vehicleID){
+        this.vehicleID=vehicleID;
+    }
+
+
+    public UserAccount getUserAccount(){
+        return this.userAccount;
+    }
+    public VehicleID getVehicleID(){
+        return this.vehicleID;
+    }
 
     public LocalDateTime getInitDate() {
         return initDate;

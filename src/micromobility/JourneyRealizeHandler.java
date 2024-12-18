@@ -17,39 +17,38 @@ import services.smartfeatures.*;
 public class JourneyRealizeHandler {
 
     private static final double EARTH_RADIUS_KM = 6371.0;
-    private Server server;
-    private UserAccount userAccount;
-    private QRDecoder qrDecoder;
-    private UnbondedBTSignal unbondedBTSignal;
+    private final Server server;
+    private final UserAccount userAccount;
+    private final QRDecoder qrDecoder;
+    private final UnbondedBTSignal unbondedBTSignal;
     private JourneyService journeyService;
     private ArduinoMicroController arduinoMicroController;
     private PMVehicle pmVehicle;
     private VehicleID vehicleID;
     private BufferedImage bufferedImage;
     private StationID stationID;
-    private boolean delimitedZone;
-    private Association association;
-    private boolean associated;
+    private StationID originStationID;
+    private StationID endStationID;
 
     public JourneyRealizeHandler(StationID stationId, QRDecoder qrDecoder, UnbondedBTSignal btSignal, Server server, UserAccount userAccount) {
         this.stationID = stationId;
         this.qrDecoder = qrDecoder;
         this.unbondedBTSignal = btSignal;
         this.server = server;
-        this.delimitedZone = true;
         this.userAccount=userAccount;
         journeyService=null;
     }
 
     //Setters per comprovar procedural Exception als tests
-    private void setDelimitedZone(Boolean aux){ this.delimitedZone=aux;}
+
     private void setStationIDNull(){this.stationID=null;}
-    private void setAssociated(Boolean aux){this.associated=aux;}
+
 
     public void scanQR()
             throws ConnectException, InvalidPairingArgsException, CorruptedImgException, PMVNotAvailException, ProceduralException {
-
-        if(stationID==null || !delimitedZone){
+        this.originStationID=this.stationID;
+        this.stationID=null; //El tornem a posar a null, ja que haurà de guardar el valor de "endStationID".
+        if(originStationID==null){
             throw new ProceduralException("Procedural exception");
         }
 
@@ -71,17 +70,20 @@ public class JourneyRealizeHandler {
         journeyService.setOriginPoint(loc);
         journeyService.setInitHour(date.getHour());
 
+        //Associem l'usuari i el vehicle
+        journeyService.setUserAccount(userAccount);
+        journeyService.setVehicleID(vehicleID);
+
         server.registerPairing(userAccount, vehicleID, stationID, loc, date);
-        association= new Association(userAccount,vehicleID,journeyService);
-        associated=true;
-        this.stationID=null; //El tornem a posar a null, ja que haurà de guardar el valor de "endStationID". El valor de "originStationID" ja l'hem guardat a JourneyService
     }
 
 
 
 
     public void unPairVehicle () throws ConnectException, InvalidPairingArgsException, PairingNotFoundException, ProceduralException{
-        if(stationID==null|| !delimitedZone || pmVehicle.getState()!=PMVState.UnderWay || !journeyService.isInProgress()){
+        this.endStationID=this.stationID;
+
+        if(endStationID==null || pmVehicle.getState()!=PMVState.UnderWay || !journeyService.isInProgress()){
             throw new ProceduralException("Procedural exception");
         }
         GeographicPoint endPoint=pmVehicle.getGeographicPoint();
@@ -108,12 +110,8 @@ public class JourneyRealizeHandler {
         pmVehicle.setAvailb();
         pmVehicle.setLocation(endPoint);
 
-        associated=false;
-        association.setVehicleID(null);
-        association.setJourneyService(null);
-        association.setVehicleID(null);
-
         journeyService.setInProgress(false);
+        journeyService=null;
         arduinoMicroController.undoBTconnection();
     }
     public void broadcastStationID (StationID stID) throws ConnectException{
@@ -124,7 +122,7 @@ public class JourneyRealizeHandler {
     // Input events from the Arduino microcontroller channel
     public void startDriving ()
             throws ConnectException, ProceduralException {
-        if(!associated || pmVehicle.getState()!=PMVState.NotAvailable || journeyService==null){
+        if(pmVehicle.getState()!=PMVState.NotAvailable || journeyService==null){
             throw new ProceduralException("Procedural exception");
         }
 
