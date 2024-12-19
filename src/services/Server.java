@@ -20,7 +20,7 @@ public interface Server {
     void stopPairing(UserAccount user, VehicleID veh, StationID st,
                      GeographicPoint loc, LocalDateTime date, float avSp, float dist,
                      int dur, BigDecimal imp)
-            throws InvalidPairingArgsException, ConnectException;
+            throws InvalidPairingArgsException, ConnectException, PairingNotFoundException;
     // Internal operations
     void setPairing(UserAccount user, VehicleID veh, StationID st,
                     GeographicPoint loc, LocalDateTime
