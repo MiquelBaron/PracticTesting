@@ -16,4 +16,8 @@ public class QRDecoderDoubleExit implements QRDecoder{
     public VehicleID getVehicleID(BufferedImage QRImg) throws CorruptedImgException {
         return this.vehicleID;
     }
+
+    public void setVehicleID(VehicleID vehicleID){
+        this.vehicleID=vehicleID;
+    }
 }

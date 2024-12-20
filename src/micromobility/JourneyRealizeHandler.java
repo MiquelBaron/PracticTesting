@@ -29,19 +29,19 @@ public class JourneyRealizeHandler {
     private StationID stationID;
     private StationID originStationID;
     private StationID endStationID;
+    private GeographicPoint geographicPoint; //Localitzacio del PMVehicle
 
-    public JourneyRealizeHandler(StationID stationId, QRDecoder qrDecoder, UnbondedBTSignal btSignal, Server server, UserAccount userAccount) {
-        this.stationID = stationId;
+    public JourneyRealizeHandler(QRDecoder qrDecoder, UnbondedBTSignal btSignal, Server server, UserAccount userAccount, ArduinoMicroController arduinoMicroController, GeographicPoint geographicPoint) {
         this.qrDecoder = qrDecoder;
         this.unbondedBTSignal = btSignal;
         this.server = server;
         this.userAccount=userAccount;
+        this.arduinoMicroController= arduinoMicroController;
+        this.geographicPoint=geographicPoint;
         journeyService=null;
     }
 
-    //Setters per comprovar procedural Exception als tests
 
-    private void setStationIDNull(){this.stationID=null;}
 
 
     public void scanQR()
@@ -59,10 +59,12 @@ public class JourneyRealizeHandler {
 
         arduinoMicroController.setBTconnection();
 
-        this.pmVehicle=new PMVehicle(vehicleID);
+        //Solucionar error geographic point
+        this.pmVehicle=new PMVehicle(vehicleID, geographicPoint);
         GeographicPoint loc=pmVehicle.getGeographicPoint();
 
         LocalDateTime date = LocalDateTime.now();
+
 
         pmVehicle.setNotAvailb();
 
@@ -74,7 +76,7 @@ public class JourneyRealizeHandler {
         journeyService.setUserAccount(userAccount);
         journeyService.setVehicleID(vehicleID);
 
-        server.registerPairing(userAccount, vehicleID, stationID, loc, date);
+        server.registerPairing(userAccount, vehicleID, originStationID, loc, date);
     }
 
 
@@ -178,6 +180,20 @@ public class JourneyRealizeHandler {
         BigDecimal durationPrice = BigDecimal.valueOf(duration);
         BigDecimal distancePrice = BigDecimal.valueOf(distance);
         return durationPrice.add(distancePrice); //L'import és la suma de la durada i la distància
+    }
+
+    //Getters pels tests
+
+    public StationID getStationID(){
+        return this.stationID;
+    }
+
+    public VehicleID getVehicleID() {
+        return vehicleID;
+    }
+
+    public PMVState pmvState(){
+        return this.pmVehicle.getState();
     }
 }
 

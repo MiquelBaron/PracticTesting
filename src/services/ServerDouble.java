@@ -16,6 +16,8 @@ public class ServerDouble implements Server{
 
     public ServerDouble(){
         this.disponibility = new HashMap<>();
+        this.disponibility.put(new VehicleID("1"),true); //Pel test
+
         this.pairings = new HashMap<>();
         this.vehicleLocation = new HashMap<>();
     }
@@ -63,11 +65,8 @@ public class ServerDouble implements Server{
         vehicleLocation.put(veh,st);
     }
 
-    //Mètodes pels tests
 
-    private void setDisponibility(VehicleID vehicleID, Boolean disponible){
-        disponibility.put(vehicleID,disponible);
-    }
+
 }
 
 

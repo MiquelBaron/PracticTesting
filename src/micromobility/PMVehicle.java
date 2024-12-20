@@ -9,7 +9,8 @@ public class PMVehicle {
     private VehicleID veh;
     private PMVState state;
     private GeographicPoint geographicPoint;
-    public PMVehicle(VehicleID veh){
+    public PMVehicle(VehicleID veh, GeographicPoint geographicPoint){
+        this.geographicPoint=geographicPoint;
         this.veh=veh;
         this.state=PMVState.Available;
     }
@@ -22,6 +23,8 @@ public class PMVehicle {
     public GeographicPoint getGeographicPoint() {
         return geographicPoint;
     }
+
+
 
     // The setter methods to be used are only the following ones
     public void setLocation (GeographicPoint gP) {
