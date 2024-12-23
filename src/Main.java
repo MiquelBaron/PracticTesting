@@ -17,17 +17,13 @@ public class Main  {
     String idVehicle;
     String idEstacio;
 
+
     public Main() throws IOException {
         this.bufferedImage= ImageIO.read(qrFile);
-        this.journeyRealizeHandler=new JourneyRealizeHandler();
+        //this.journeyRealizeHandler=new JourneyRealizeHandler();
     }
     public void run() {
-        System.out.print("Introdueix IDUsuari ");
+        System.out.print("Introdueix el teu identificador d'usuari ");
         this.idUsuari = scanner.nextLine();
-        
     }
-
-
-
-
 }

@@ -1,54 +1,53 @@
 package micromobility;
 
-import com.sun.net.httpserver.Authenticator;
-import data.*;
+import data.GeographicPoint;
+import data.StationID;
+import data.UserAccount;
+import data.VehicleID;
 import exceptions.*;
+import services.Server;
+import services.smartfeatures.ArduinoMicroController;
+import services.smartfeatures.QRDecoder;
+import services.smartfeatures.UnbondedBTSignal;
 
 import java.awt.image.BufferedImage;
 import java.math.BigDecimal;
 import java.net.ConnectException;
-import java.net.PortUnreachableException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-
-import services.*;
-import services.smartfeatures.*;
 
 public class JourneyRealizeHandler {
 
     private static final double EARTH_RADIUS_KM = 6371.0;
     private final Server server;
-    private final UserAccount userAccount;
     private final QRDecoder qrDecoder;
     private final UnbondedBTSignal unbondedBTSignal;
+    private UserAccount userAccount;
     private JourneyService journeyService;
-    private ArduinoMicroController arduinoMicroController;
+    private final ArduinoMicroController arduinoMicroController;
     private PMVehicle pmVehicle;
     private VehicleID vehicleID;
-    private BufferedImage bufferedImage;
+    private final BufferedImage bufferedImage;
     private StationID stationID;
-    private StationID originStationID;
-    private StationID endStationID;
-    private GeographicPoint geographicPoint; //Localitzacio del PMVehicle
+    private final GeographicPoint geographicPoint; //Localitzacio del PMVehicle
 
-    public JourneyRealizeHandler(QRDecoder qrDecoder, UnbondedBTSignal btSignal, Server server, UserAccount userAccount, ArduinoMicroController arduinoMicroController, GeographicPoint geographicPoint) {
+    public JourneyRealizeHandler(QRDecoder qrDecoder, UnbondedBTSignal btSignal, Server server, UserAccount userAccount, ArduinoMicroController arduinoMicroController, GeographicPoint geographicPoint, BufferedImage bufferedImage) {
         this.qrDecoder = qrDecoder;
         this.unbondedBTSignal = btSignal;
         this.server = server;
-        this.userAccount=userAccount;
-        this.arduinoMicroController= arduinoMicroController;
-        this.geographicPoint=geographicPoint;
-        journeyService=null;
+        this.userAccount = userAccount;
+        this.arduinoMicroController = arduinoMicroController;
+        this.geographicPoint = geographicPoint;
+        this.bufferedImage = bufferedImage;
+        journeyService = null;
     }
-
-
 
 
     public void scanQR()
             throws ConnectException, InvalidPairingArgsException, CorruptedImgException, PMVNotAvailException, ProceduralException {
-        this.originStationID=this.stationID;
-        this.stationID=null; //El tornem a posar a null, ja que haurà de guardar el valor de "endStationID".
-        if(originStationID==null){
+        StationID originStationID = this.stationID;
+        this.stationID = null; //El tornem a posar a null, ja que haurà de guardar el valor de "endStationID".
+        if (originStationID == null) {
             throw new ProceduralException("Procedural exception");
         }
 
@@ -59,9 +58,8 @@ public class JourneyRealizeHandler {
 
         arduinoMicroController.setBTconnection();
 
-        //Solucionar error geographic point
-        this.pmVehicle=new PMVehicle(vehicleID, geographicPoint);
-        GeographicPoint loc=pmVehicle.getGeographicPoint();
+        this.pmVehicle = new PMVehicle(vehicleID, geographicPoint);
+        GeographicPoint loc = pmVehicle.getGeographicPoint();
 
         LocalDateTime date = LocalDateTime.now();
 
@@ -80,15 +78,13 @@ public class JourneyRealizeHandler {
     }
 
 
+    public void unPairVehicle() throws ConnectException, InvalidPairingArgsException, PairingNotFoundException, ProceduralException {
+        StationID endStationID = this.stationID;
 
-
-    public void unPairVehicle () throws ConnectException, InvalidPairingArgsException, PairingNotFoundException, ProceduralException{
-        this.endStationID=this.stationID;
-
-        if(endStationID==null || pmVehicle.getState()!=PMVState.UnderWay || !journeyService.isInProgress()){
+        if (endStationID == null || pmVehicle.getState() != PMVState.UnderWay || !journeyService.isInProgress()) {
             throw new ProceduralException("Procedural exception");
         }
-        GeographicPoint endPoint=pmVehicle.getGeographicPoint();
+        GeographicPoint endPoint = pmVehicle.getGeographicPoint();
         LocalDateTime endDate = LocalDateTime.now();
 
         journeyService.setEndDate(endDate);
@@ -97,13 +93,13 @@ public class JourneyRealizeHandler {
 
         int duration = calculateDuration(journeyService.getInitDate(), endDate);
         float distance = calculateDistance(journeyService.getOriginPoint(), endPoint);
-        float avSpeed = distance/(float) duration;
+        float avSpeed = distance / (float) duration;
 
         journeyService.setDistance(distance);
         journeyService.setDuration(duration);
         journeyService.setAvgSpeed(avSpeed);
 
-        BigDecimal imp = calculateImport(duration,distance);
+        BigDecimal imp = calculateImport(duration, distance);
 
         journeyService.setImportAmount(imp);
 
@@ -113,45 +109,47 @@ public class JourneyRealizeHandler {
         pmVehicle.setLocation(endPoint);
 
         journeyService.setInProgress(false);
-        journeyService=null;
+        journeyService = null;
         arduinoMicroController.undoBTconnection();
     }
-    public void broadcastStationID (StationID stID) throws ConnectException{
+
+    public void broadcastStationID(StationID stID) throws ConnectException {
         unbondedBTSignal.BTbroadcast();
-        this.stationID=stID;
+        this.stationID = stID;
     }
 
     // Input events from the Arduino microcontroller channel
-    public void startDriving ()
+    public void startDriving()
             throws ConnectException, ProceduralException {
-        if(pmVehicle.getState()!=PMVState.NotAvailable || journeyService==null){
+        if (pmVehicle.getState() != PMVState.NotAvailable || journeyService == null) {
             throw new ProceduralException("Procedural exception");
         }
 
-        try{
+        try {
             arduinoMicroController.startDriving();
-        } catch(PMVPhisicalException e){
+        } catch (PMVPhisicalException e) {
             throw new ConnectException("Connect exception");
         }
         pmVehicle.setUnderWay();
         journeyService.setInProgress(true);
     }
-    public void stopDriving ()
-            throws ConnectException, ProceduralException{
-        if(pmVehicle.getState()!=PMVState.UnderWay || !journeyService.isInProgress()){
+
+    public void stopDriving()
+            throws ConnectException, ProceduralException {
+        if (pmVehicle.getState() != PMVState.UnderWay || !journeyService.isInProgress()) {
             throw new ProceduralException("Procedural exception");
         }
 
-        try{
+        try {
             arduinoMicroController.stopDriving();
-        } catch(PMVPhisicalException e){
+        } catch (PMVPhisicalException e) {
             throw new ConnectException("Connect exception");
         }
     }
 
 
     // Internal operations
-    private Float calculateDistance(GeographicPoint point1, GeographicPoint point2){
+    private Float calculateDistance(GeographicPoint point1, GeographicPoint point2) {
         double lat1Rad = Math.toRadians(point1.getLatitude());
         double lon1Rad = Math.toRadians(point1.getLongitude());
         double lat2Rad = Math.toRadians(point2.getLatitude());
@@ -172,19 +170,19 @@ public class JourneyRealizeHandler {
         return (float) distance;
     }
 
-    private int calculateDuration(LocalDateTime startTime, LocalDateTime endTime){
+    private int calculateDuration(LocalDateTime startTime, LocalDateTime endTime) {
         return (int) ChronoUnit.MINUTES.between(startTime, endTime); //Durada en minuts
     }
 
-    private BigDecimal calculateImport(int duration, float distance){
+    private BigDecimal calculateImport(int duration, float distance) {
         BigDecimal durationPrice = BigDecimal.valueOf(duration);
         BigDecimal distancePrice = BigDecimal.valueOf(distance);
         return durationPrice.add(distancePrice); //L'import és la suma de la durada i la distància
     }
 
-    //Getters pels tests
+    //Getters i setters pels tests
 
-    public StationID getStationID(){
+    public StationID getStationID() {
         return this.stationID;
     }
 
@@ -192,9 +190,19 @@ public class JourneyRealizeHandler {
         return vehicleID;
     }
 
-    public PMVState pmvState(){
+    public PMVState pmvState() {
         return this.pmVehicle.getState();
     }
+
+    public JourneyService getJourneyService() {
+        return this.journeyService;
+    }
+
+    public void setUserAccount(UserAccount userAccount) {
+        this.userAccount = userAccount;
+    }
+
+
 }
 
 
