@@ -34,7 +34,6 @@ public class TestScanQrFail {
     UserAccount userAccount;
     ArduinoMicroController arduinoMicroController;
     QRDecoder qrDecoderExit;
-    QRDecoder getQrDecoderFail;
     UnbondedBTSignal unbondedBTSignal;
     VehicleID vehicleID;
     BufferedImage bufferedImage;
@@ -63,6 +62,15 @@ public class TestScanQrFail {
 
     }
 
+    @Test
+    public void testScanQrThrowsPairingProceduralException() {
+        this.qrDecoderExit = new QRDecoderDoubleExit(this.vehicleID);
+        this.arduinoMicroController = new ArduinoMicroControllerDoubleExit();
+        this.server = new ServerDouble();
+        this.journeyRealizeHandler = new JourneyRealizeHandler(qrDecoderExit, unbondedBTSignal, server, userAccount, arduinoMicroController, geographicPoint, bufferedImage);
+
+        assertThrows(ProceduralException.class, () -> journeyRealizeHandler.scanQR());
+    }
 
     @Test
     public void testScanQrThrowsCorruptedImageException() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
@@ -72,6 +80,7 @@ public class TestScanQrFail {
 
         assertThrows(CorruptedImgException.class, () -> journeyRealizeHandler.scanQR());
     }
+
 
     @Test
     public void testScanQrThrowsPMVNotAvailException() throws ConnectException {
@@ -84,6 +93,7 @@ public class TestScanQrFail {
         assertThrows(PMVNotAvailException.class, () -> journeyRealizeHandler.scanQR());
     }
 
+
     @Test
     public void testScanQrThrowsConnectException() throws ConnectException, CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException {
         this.qrDecoderExit = new QRDecoderDoubleExit(this.vehicleID);
@@ -94,6 +104,7 @@ public class TestScanQrFail {
 
         assertThrows(ConnectException.class, () -> journeyRealizeHandler.scanQR());
     }
+
 
     @Test
     public void testScanQrThrowsInvalidPairingArgsException() throws ConnectException {
@@ -107,15 +118,7 @@ public class TestScanQrFail {
         assertThrows(InvalidPairingArgsException.class, () -> journeyRealizeHandler.scanQR());
     }
 
-    @Test
-    public void testScanQrThrowsPairingProceduralException() throws ConnectException {
-        this.qrDecoderExit = new QRDecoderDoubleExit(this.vehicleID);
-        this.arduinoMicroController = new ArduinoMicroControllerDoubleExit();
-        this.server = new ServerDouble();
-        this.journeyRealizeHandler = new JourneyRealizeHandler(qrDecoderExit, unbondedBTSignal, server, userAccount, arduinoMicroController, geographicPoint, bufferedImage);
 
-        assertThrows(ProceduralException.class, () -> journeyRealizeHandler.scanQR());
-    }
 
 }
 

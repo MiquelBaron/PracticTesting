@@ -21,7 +21,7 @@ import java.net.ConnectException;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
-public class TestBroadcastStationIDFail {
+public class TestBroadcastStationIDFail implements BroadcastStationIDInterface{
 
     String idVeh;
     String idUs;
@@ -57,7 +57,7 @@ public class TestBroadcastStationIDFail {
         this.arduinoMicroController = new ArduinoMicroControllerDoubleExit();
         this.journeyRealizeHandler = new JourneyRealizeHandler(qrDecoderExit, unbondedBTSignal, server, userAccount, arduinoMicroController, geographicPoint, bufferedImage);
     }
-
+    @Override
     @Test
     public void testBroadcastStationID() throws ConnectException {
         assertThrows(ConnectException.class, () -> journeyRealizeHandler.broadcastStationID(this.st));
