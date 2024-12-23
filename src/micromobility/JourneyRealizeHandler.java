@@ -173,7 +173,7 @@ public class JourneyRealizeHandler {
     }
 
     private int calculateDuration(LocalDateTime startTime, LocalDateTime endTime){
-        return (int) ChronoUnit.MINUTES.between(startTime, endTime);
+        return (int) ChronoUnit.MINUTES.between(startTime, endTime); //Durada en minuts
     }
 
     private BigDecimal calculateImport(int duration, float distance){
