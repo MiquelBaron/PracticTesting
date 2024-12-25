@@ -63,19 +63,14 @@ public class JourneyRealizeHandler {
 
         LocalDateTime date = LocalDateTime.now();
 
-
         pmVehicle.setNotAvailb();
 
-        journeyService.setInitDate(date);
-        journeyService.setOriginPoint(loc);
-        journeyService.setInitHour(date.getHour());
-
-        //Associem l'usuari i el vehicle
-        journeyService.setUserAccount(userAccount);
-        journeyService.setVehicleID(vehicleID);
+        addValuesToNewJourneyService(date, loc, date.getHour(), userAccount, vehicleID); //Extract method
 
         server.registerPairing(userAccount, vehicleID, originStationID, loc, date);
     }
+
+
 
 
     public void unPairVehicle() throws ConnectException, InvalidPairingArgsException, PairingNotFoundException, ProceduralException {
@@ -87,23 +82,15 @@ public class JourneyRealizeHandler {
         GeographicPoint endPoint = pmVehicle.getGeographicPoint();
         LocalDateTime endDate = LocalDateTime.now();
 
-        journeyService.setEndDate(endDate);
-        journeyService.setEndHour(endDate.getHour());
-        journeyService.setEndPoint(endPoint);
-
         int duration = calculateDuration(journeyService.getInitDate(), endDate);
         float distance = geographicPoint.calculateDistance(journeyService.getOriginPoint(), endPoint);
         float avSpeed = distance / (float) duration;
 
-        journeyService.setDistance(distance);
-        journeyService.setDuration(duration);
-        journeyService.setAvgSpeed(avSpeed);
+        BigDecimal impAmount = calculateImport(duration, distance);
 
-        BigDecimal imp = calculateImport(duration, distance);
+        addValuesToFinishedJourneyService(endDate, endDate.getHour(), endPoint, distance, duration,avSpeed,impAmount); //Extract method
 
-        journeyService.setImportAmount(imp);
-
-        server.stopPairing(userAccount, vehicleID, stationID, endPoint, endDate, avSpeed, distance, duration, imp);
+        server.stopPairing(userAccount, vehicleID, stationID, endPoint, endDate, avSpeed, distance, duration, impAmount);
 
         pmVehicle.setAvailb();
         pmVehicle.setLocation(endPoint);
@@ -112,6 +99,8 @@ public class JourneyRealizeHandler {
         journeyService = null;
         arduinoMicroController.undoBTconnection();
     }
+
+
 
     public void broadcastStationID(StationID stID) throws ConnectException {
         unbondedBTSignal.BTbroadcast();
@@ -183,6 +172,23 @@ public class JourneyRealizeHandler {
         this.userAccount = userAccount;
     }
 
+
+    private void addValuesToNewJourneyService(LocalDateTime date, GeographicPoint loc, int hour, UserAccount userAccount, VehicleID vehicleID) {
+        journeyService.setInitDate(date);
+        journeyService.setOriginPoint(loc);
+        journeyService.setInitHour(hour);
+        journeyService.setUserAccount(userAccount);
+        journeyService.setVehicleID(vehicleID);
+    }
+    private void addValuesToFinishedJourneyService(LocalDateTime endDate, int hour, GeographicPoint endPoint, float distance, int duration, float avSpeed, BigDecimal imp) {
+        journeyService.setEndDate(endDate);
+        journeyService.setEndHour(hour);
+        journeyService.setEndPoint(endPoint);
+        journeyService.setDistance(distance);
+        journeyService.setDuration(duration);
+        journeyService.setAvgSpeed(avSpeed);
+        journeyService.setImportAmount(imp);
+    }
 
 }
 
