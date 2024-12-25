@@ -20,6 +20,7 @@ public class Main  {
 
     public Main() throws IOException {
         this.bufferedImage= ImageIO.read(qrFile);
+
         //this.journeyRealizeHandler=new JourneyRealizeHandler();
     }
     public void run() {

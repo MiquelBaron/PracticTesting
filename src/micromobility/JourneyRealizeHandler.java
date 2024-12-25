@@ -92,7 +92,7 @@ public class JourneyRealizeHandler {
         journeyService.setEndPoint(endPoint);
 
         int duration = calculateDuration(journeyService.getInitDate(), endDate);
-        float distance = calculateDistance(journeyService.getOriginPoint(), endPoint);
+        float distance = geographicPoint.calculateDistance(journeyService.getOriginPoint(), endPoint);
         float avSpeed = distance / (float) duration;
 
         journeyService.setDistance(distance);
@@ -149,26 +149,7 @@ public class JourneyRealizeHandler {
 
 
     // Internal operations
-    private Float calculateDistance(GeographicPoint point1, GeographicPoint point2) {
-        double lat1Rad = Math.toRadians(point1.getLatitude());
-        double lon1Rad = Math.toRadians(point1.getLongitude());
-        double lat2Rad = Math.toRadians(point2.getLatitude());
-        double lon2Rad = Math.toRadians(point2.getLongitude());
 
-        double deltaLat = lat2Rad - lat1Rad;
-        double deltaLon = lon2Rad - lon1Rad;
-
-        // Fórmula de Haversine
-        double a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2)
-                + Math.cos(lat1Rad) * Math.cos(lat2Rad)
-                * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
-
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        double distance = EARTH_RADIUS_KM * c;
-
-        return (float) distance;
-    }
 
     private int calculateDuration(LocalDateTime startTime, LocalDateTime endTime) {
         return (int) ChronoUnit.MINUTES.between(startTime, endTime); //Durada en minuts
