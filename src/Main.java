@@ -1,4 +1,12 @@
+import data.GeographicPoint;
+import data.StationID;
+import data.UserAccount;
+import data.VehicleID;
 import micromobility.JourneyRealizeHandler;
+import micromobility.PMVehicle;
+import services.Server;
+import services.ServerDouble;
+import services.smartfeatures.*;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -9,22 +17,43 @@ import java.util.Scanner;
 
 
 public class Main  {
-    JourneyRealizeHandler journeyRealizeHandler;
-    File qrFile = new File("QrImage.png");
-    BufferedImage bufferedImage;
-    Scanner scanner = new Scanner(System.in);
-    String idUsuari;
-    String idVehicle;
-    String idEstacio;
 
 
     public Main() throws IOException {
-        this.bufferedImage= ImageIO.read(qrFile);
 
-        //this.journeyRealizeHandler=new JourneyRealizeHandler();
+        JourneyRealizeHandler journeyRealizeHandler = init();
+
+        try {
+            StationID originStation = new StationID("1");
+            StationID endStation = new StationID("2");
+
+            journeyRealizeHandler.broadcastStationID(originStation);
+            journeyRealizeHandler.scanQR();
+            journeyRealizeHandler.startDriving();
+            journeyRealizeHandler.broadcastStationID(endStation);
+            journeyRealizeHandler.stopDriving();
+            journeyRealizeHandler.unPairVehicle();
+
+        }catch(Exception e){
+            System.out.println("Error durant l'execucio");
+        }
     }
-    public void run() {
-        System.out.print("Introdueix el teu identificador d'usuari ");
-        this.idUsuari = scanner.nextLine();
+
+    private static JourneyRealizeHandler init() throws IOException {
+
+        UserAccount userAccount = new UserAccount("1");
+        GeographicPoint geographicPoint = new GeographicPoint(10,10);
+        VehicleID vehicleID = new VehicleID("10");
+
+        ArduinoMicroController arduinoMicroController= new ArduinoMicroControllerDoubleExit();
+        UnbondedBTSignal unbondedBTSignal=new UnbondedBTSignalDoubleExit();
+        Server server=new ServerDouble();
+        QRDecoder qrDecoder = new QRDecoderDoubleExit(vehicleID);
+
+        File qrFile = new File("QrImage.png");
+        BufferedImage bufferedImage= ImageIO.read(qrFile);
+
+        return new JourneyRealizeHandler(qrDecoder,unbondedBTSignal, server,userAccount,arduinoMicroController,geographicPoint,bufferedImage);
     }
+
 }
