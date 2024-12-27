@@ -13,66 +13,93 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
+import java.time.LocalDateTime;
 
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestScanQrExit {
-    String idVeh;
-    String idUs;
-    String idSt;
+
     JourneyRealizeHandler journeyRealizeHandler;
-    Server server;
-    UserAccount userAccount;
-    ArduinoMicroController arduinoMicroController;
-    QRDecoder qrDecoderExit;
-    QRDecoder getQrDecoderFail;
-    UnbondedBTSignal unbondedBTSignal;
     VehicleID vehicleID;
-    BufferedImage bufferedImage;
-    StationID st;
+    PMVehicle pmVehicle;
+    UserAccount userAccount;
     GeographicPoint geographicPoint;
-    ServiceID serviceID;
-     
+
     @BeforeEach
-    public void setUp() throws IOException {
+    public void setUp() throws ConnectException {
+        StationID st = new StationID("1", new GeographicPoint(10,10));
+        vehicleID = new VehicleID("1"); //Vehicle que ja tenim emmagatzemat a servidor
+        geographicPoint = new GeographicPoint(10,10);
+        userAccount = new UserAccount("1");
 
-        this.idSt="100";
-        this.idUs="10";
-        this.idVeh="1";
-        this.geographicPoint=new GeographicPoint(10,10);
+        ArduinoMicroController arduinoMicroController = new ArduinoMicroControllerDoubleExit();
+        QRDecoder qrDecoder = new QRDecoderDoubleExit(vehicleID);
+        Server server = new ServerDouble();
+        UnbondedBTSignal unbondedBTSignal=new UnbondedBTSignalDoubleExit();
 
-        File qrFile = new File("QrImage.png");
-        this.bufferedImage= ImageIO.read(qrFile);
+        pmVehicle=new PMVehicle(vehicleID,geographicPoint);
 
-        this.st=new StationID(idSt);
-        this.vehicleID=new VehicleID(idVeh);
-        this.userAccount=new UserAccount(idUs);
-        this.serviceID=new ServiceID("1");
 
-        this.qrDecoderExit = new QRDecoderDoubleExit(this.vehicleID);
-        this.unbondedBTSignal = new UnbondedBTSignalDoubleExit();
-        this.server=new ServerDouble();
-        this.arduinoMicroController=new ArduinoMicroControllerDoubleExit();
-        this.journeyRealizeHandler=new JourneyRealizeHandler(qrDecoderExit,unbondedBTSignal,server,userAccount,arduinoMicroController,geographicPoint,bufferedImage,serviceID );
+        this.journeyRealizeHandler= new JourneyRealizeHandler();
+        journeyRealizeHandler.setUnbondedBTSignal(unbondedBTSignal);
+        journeyRealizeHandler.setServer(server);
+        journeyRealizeHandler.setArduinoMicroController(arduinoMicroController);
+        journeyRealizeHandler.setQrDecoder(qrDecoder);
+        journeyRealizeHandler.setPmVehicle(pmVehicle);
+        journeyRealizeHandler.setUserAccount(userAccount);
+
         journeyRealizeHandler.broadcastStationID(st);
 
     }
 
     @Test
-    public void testScanQr() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
+    public void testScanQrDoesNotThrowException(){
+        assertDoesNotThrow(()-> journeyRealizeHandler.scanQR());
+    }
+
+    @Test
+    public void testGetVehicleID() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
         journeyRealizeHandler.scanQR();
+
         assertEquals(journeyRealizeHandler.getVehicleID(),this.vehicleID);
-        assertEquals(journeyRealizeHandler.pmvState(),PMVState.NotAvailable);
+    }
+
+    @Test
+    public void testJourneyServiceNotNull() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
+        journeyRealizeHandler.scanQR();
+
         assertNotNull(journeyRealizeHandler.getJourneyService());
     }
 
+    @Test
+    public void testPMVehicleIsNotAvailable() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
+        journeyRealizeHandler.scanQR();
 
+        assertEquals(PMVState.NotAvailable,pmVehicle.getState());
+    }
 
+    @Test
+    public void testJourneyServiceOriginPoint() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
+        journeyRealizeHandler.scanQR();
+        JourneyService journeyService=journeyRealizeHandler.getJourneyService();
 
+        assertEquals(geographicPoint, journeyService.getOriginPoint());
+    }
+    @Test
+    public void testJourneyServiceIsAssociated() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
+        journeyRealizeHandler.scanQR();
+        JourneyService journeyService=journeyRealizeHandler.getJourneyService();
 
+        assertEquals(userAccount,journeyService.getUserAccount());
+        assertEquals(vehicleID,journeyService.getVehicleID());
+    }
 
-
+    @Test
+    public void testPMVehicleAssociatedWithUser() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
+        journeyRealizeHandler.scanQR();
+        assertEquals(userAccount, pmVehicle.getUserAccount());
+    }
 
 
 

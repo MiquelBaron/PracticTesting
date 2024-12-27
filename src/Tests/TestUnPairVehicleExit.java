@@ -1,11 +1,11 @@
 package Tests;
 
 import data.*;
-import exceptions.InvalidPairingArgsException;
-import exceptions.PairingNotFoundException;
-import exceptions.ProceduralException;
+import exceptions.*;
 import micromobility.JourneyRealizeHandler;
 import micromobility.JourneyService;
+import micromobility.PMVState;
+import micromobility.PMVehicle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,89 +20,86 @@ import java.net.ConnectException;
 
 public class TestUnPairVehicleExit {
 
-    String idVeh;
-    String idUs;
-    String idSt;
     JourneyRealizeHandler journeyRealizeHandler;
-    Server server;
-    UserAccount userAccount;
-    ArduinoMicroController arduinoMicroController;
-    QRDecoder qrDecoderExit;
-    UnbondedBTSignal unbondedBTSignal;
     VehicleID vehicleID;
-    BufferedImage bufferedImage;
-    StationID st;
+    PMVehicle pmVehicle;
+    UserAccount userAccount;
     GeographicPoint geographicPoint;
-    JourneyService journeyService;
-    ServiceID serviceID;
+
+    StationID initStation;
+    StationID endStation;
+
     @BeforeEach
-    public void setUp() throws IOException, ProceduralException {
-        this.idSt="100";
-        this.idUs="10";
-        this.idVeh="1";
-        this.geographicPoint=new GeographicPoint(10,10);
+    public void setUp() throws ConnectException, CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException {
+         initStation = new StationID("1", new GeographicPoint(10,10));
+         endStation =new StationID("2", new GeographicPoint(20,20));
 
-        File qrFile = new File("QrImage.png");
-        this.bufferedImage= ImageIO.read(qrFile);
-        this.journeyService=new JourneyService();
+        vehicleID = new VehicleID("1"); //Vehicle que ja tenim emmagatzemat a servidor
+        geographicPoint = new GeographicPoint(10,10);
+        userAccount = new UserAccount("1");
 
-        this.st=new StationID(idSt);
-        this.vehicleID=new VehicleID(idVeh);
-        this.userAccount=new UserAccount(idUs);
-        this.serviceID=new ServiceID("1");
+        ArduinoMicroController arduinoMicroController = new ArduinoMicroControllerDoubleExit();
+        QRDecoder qrDecoder = new QRDecoderDoubleExit(vehicleID);
+        Server server = new ServerDouble();
+        UnbondedBTSignal unbondedBTSignal=new UnbondedBTSignalDoubleExit();
+
+        pmVehicle=new PMVehicle(vehicleID,geographicPoint);
 
 
+        this.journeyRealizeHandler= new JourneyRealizeHandler();
+        journeyRealizeHandler.setUnbondedBTSignal(unbondedBTSignal);
+        journeyRealizeHandler.setServer(server);
+        journeyRealizeHandler.setArduinoMicroController(arduinoMicroController);
+        journeyRealizeHandler.setQrDecoder(qrDecoder);
+        journeyRealizeHandler.setPmVehicle(pmVehicle);
+        journeyRealizeHandler.setUserAccount(userAccount);
 
-        this.qrDecoderExit = new QRDecoderDoubleExit(this.vehicleID);
-        this.unbondedBTSignal = new UnbondedBTSignalDoubleExit();
-        this.server=new ServerDouble();
-        this.arduinoMicroController=new ArduinoMicroControllerDoubleExit();
-        this.journeyRealizeHandler=new JourneyRealizeHandler(qrDecoderExit,unbondedBTSignal,server,userAccount,arduinoMicroController,geographicPoint,bufferedImage,serviceID, journeyService );
-        this.journeyRealizeHandler.broadcastStationID(st);
-        this.journeyRealizeHandler.startDriving();
-        this.journeyRealizeHandler.stopDriving();
+        journeyRealizeHandler.broadcastStationID(initStation);
+        journeyRealizeHandler.scanQR();
+        journeyRealizeHandler.startDriving();
+        journeyRealizeHandler.broadcastStationID(endStation);
+        journeyRealizeHandler.stopDriving();
+
 
     }
 
     @Test
-    public void testUnNotNull() throws ConnectException, PairingNotFoundException, InvalidPairingArgsException, ProceduralException {
-        journeyRealizeHandler.unPairVehicle();
-
-        assertAll((assertNotNull(journeyService.getEndPoint()),
-                assertNotNull(journeyService.getEndDate()),
-                assertNotNull(journeyService.getEndHour()),
-                assertNotNull(journeyService.getDuration()),
-                assertNotNull(journeyService.getDistance()),
-                assertNotNull(journeyService.getAvgSpeed())
-        );
+    public void testUnPairVehicleDoesNotThrowException() throws ConnectException, CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, PairingNotFoundException {
+        assertDoesNotThrow(()->journeyRealizeHandler.unPairVehicle());
     }
 
+    @Test
+    public void testJourneyServiceEndPoint() throws ConnectException, PairingNotFoundException, InvalidPairingArgsException, ProceduralException {
+        JourneyService journeyService=journeyRealizeHandler.getJourneyService();
+        journeyRealizeHandler.unPairVehicle();
 
+        assertEquals(endStation.getLoc(),journeyService.getEndPoint());
+    }
 
+    @Test
+    public void testPMVehicleIsNotAvailable() throws PairingNotFoundException, InvalidPairingArgsException, ProceduralException, ConnectException {
+        journeyRealizeHandler.unPairVehicle();
 
+        assertEquals(PMVState.Available, pmVehicle.getState());
+    }
 
+    @Test
+    public void testPMVehicleUbicationHasBeenUpdated() throws PairingNotFoundException, InvalidPairingArgsException, ProceduralException, ConnectException {
+        journeyRealizeHandler.unPairVehicle();
+        assertEquals(endStation.getLoc(), pmVehicle.getGeographicPoint());
+    }
 
+    @Test
+    public void testPMVehicleVinculationHasBeenDeleted() throws PairingNotFoundException, InvalidPairingArgsException, ProceduralException, ConnectException {
+        journeyRealizeHandler.unPairVehicle();
+        assertNull(pmVehicle.getUserAccount());
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    @Test
+    public void testJourneyServiceHasBeenDeleted() throws PairingNotFoundException, InvalidPairingArgsException, ProceduralException, ConnectException {
+        journeyRealizeHandler.unPairVehicle();
+        assertNull(journeyRealizeHandler.getJourneyService());
+    }
 
 
 
@@ -110,3 +107,37 @@ public class TestUnPairVehicleExit {
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

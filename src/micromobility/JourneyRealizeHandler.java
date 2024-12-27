@@ -15,44 +15,34 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 public class JourneyRealizeHandler {
+    private static final double EARTH_RADIUS_KM = 6371.0; //Per calcular la distancia a partir de longitud i latitud
 
-    private final Server server;
-    private final QRDecoder qrDecoder;
-    private final UnbondedBTSignal unbondedBTSignal;
+    private Server server;
+    private QRDecoder qrDecoder;
+    private  UnbondedBTSignal unbondedBTSignal;
     private UserAccount userAccount;
     private JourneyService journeyService;
-    private final ArduinoMicroController arduinoMicroController;
+    private ArduinoMicroController arduinoMicroController;
     private PMVehicle pmVehicle;
     private VehicleID vehicleID;
-    private final BufferedImage bufferedImage;
+    private  BufferedImage bufferedImage;
     private StationID stationID;
     private ServiceID serviceID;
     private Wallet wallet;
     private BigDecimal impAmount;
-    private final GeographicPoint geographicPoint; //Localitzacio del PMVehicle
 
-    public JourneyRealizeHandler(QRDecoder qrDecoder, UnbondedBTSignal btSignal, Server server, UserAccount userAccount, ArduinoMicroController arduinoMicroController, GeographicPoint geographicPoint, BufferedImage bufferedImage, ServiceID serviceID, JourneyService journeyService) {
-        this.qrDecoder = qrDecoder;
-        this.unbondedBTSignal = btSignal;
-        this.server = server;
-        this.userAccount = userAccount;
-        this.arduinoMicroController = arduinoMicroController;
-        this.geographicPoint = geographicPoint;
-        this.bufferedImage = bufferedImage;
-        this.serviceID= serviceID;
-        this.journeyService=journeyService;
-        journeyService = null;
+
+    public JourneyRealizeHandler() {
+        journeyService=null;
     }
-
-
-
 
     public void scanQR()
             throws ConnectException, InvalidPairingArgsException, CorruptedImgException, PMVNotAvailException, ProceduralException {
         StationID originStationID = this.stationID;
         this.stationID = null; //El tornem a posar a null, ja que haurà de guardar el valor de "endStationID".
+
         if (originStationID == null) {
-            throw new ProceduralException("Procedural exception");
+            throw new ProceduralException("Station has null value");
         }
 
         this.vehicleID = qrDecoder.getVehicleID(this.bufferedImage); //VehicleId
@@ -62,12 +52,12 @@ public class JourneyRealizeHandler {
 
         arduinoMicroController.setBTconnection();
 
-        this.pmVehicle = new PMVehicle(vehicleID, geographicPoint);
         GeographicPoint loc = pmVehicle.getGeographicPoint();
 
         LocalDateTime date = LocalDateTime.now();
 
         pmVehicle.setNotAvailb();
+        pmVehicle.setUserAccount(userAccount); //Pas de vinculacio entre vehicle i usuari
 
         addValuesToNewJourneyService(date, loc, date.getHour(), userAccount, vehicleID); //Extract method
 
@@ -83,14 +73,16 @@ public class JourneyRealizeHandler {
         if (endStationID == null || pmVehicle.getState() != PMVState.UnderWay || !journeyService.isInProgress()) {
             throw new ProceduralException("Procedural exception");
         }
-        GeographicPoint endPoint = pmVehicle.getGeographicPoint();
+
+        GeographicPoint endPoint = endStationID.getLoc();
+
         LocalDateTime endDate = LocalDateTime.now();
 
         int duration = calculateDuration(journeyService.getInitDate(), endDate);
-        float distance = geographicPoint.calculateDistance(journeyService.getOriginPoint(), endPoint);
+        float distance = calculateDistance(journeyService.getOriginPoint(), endStationID.getLoc());
         float avSpeed = distance / (float) duration;
 
-        this.impAmount = calculateImport(duration, distance);
+        impAmount = calculateImport(duration, distance);
 
         addValuesToFinishedJourneyService(endDate, endDate.getHour(), endPoint, distance, duration,avSpeed,impAmount, serviceID); //Extract method
 
@@ -98,10 +90,10 @@ public class JourneyRealizeHandler {
 
         pmVehicle.setAvailb();
         pmVehicle.setLocation(endPoint);
+        pmVehicle.setUserAccount(null);
 
         journeyService.setInProgress(false);
         journeyService = null;
-        arduinoMicroController.undoBTconnection();
     }
 
 
@@ -144,34 +136,23 @@ public class JourneyRealizeHandler {
         if(!pmVehicle.getState().equals(PMVState.Available)){
             throw new ProceduralException("Procedural exception");
         }
-        WalletPayment walletPayment = new WalletPayment();
-        walletPayment.setImpAmount(this.impAmount);
         realizePayment(this.impAmount);
         server.registerPayment(serviceID, userAccount,impAmount,opt);
     }
 
     public void realizePayment(BigDecimal imp) throws NotEnoughWalletException {
-        wallet.deduct(imp);
+        WalletPayment walletPayment=new WalletPayment(wallet);
+        walletPayment.setImpAmount(imp);
+        walletPayment.realizeWalletPayment();
+        walletPayment.setJourneyService(journeyService);
     }
 
     public void undoBtConnection(){
         arduinoMicroController.undoBTconnection();
     }
 
-    // Internal operations
 
-
-    private int calculateDuration(LocalDateTime startTime, LocalDateTime endTime) {
-        return (int) ChronoUnit.MINUTES.between(startTime, endTime); //Durada en minuts
-    }
-
-    private BigDecimal calculateImport(int duration, float distance) {
-        BigDecimal durationPrice = BigDecimal.valueOf(duration);
-        BigDecimal distancePrice = BigDecimal.valueOf(distance);
-        return durationPrice.add(distancePrice); //L'import és la suma de la durada i la distància
-    }
-
-    //Getters i setters pels tests
+    //Getters pels tests
 
     public StationID getStationID() {
         return this.stationID;
@@ -189,10 +170,10 @@ public class JourneyRealizeHandler {
         return this.journeyService;
     }
 
-    public void setUserAccount(UserAccount userAccount) {
-        this.userAccount = userAccount;
-    }
 
+
+
+    //Internal operations
 
     private void addValuesToNewJourneyService(LocalDateTime date, GeographicPoint loc, int hour, UserAccount userAccount, VehicleID vehicleID) {
         journeyService.setInitDate(date);
@@ -211,7 +192,73 @@ public class JourneyRealizeHandler {
         journeyService.setImportAmount(imp);
         journeyService.setServiceID(serviceID);
     }
+    private int calculateDuration(LocalDateTime startTime, LocalDateTime endTime) {
+        return (int) ChronoUnit.MILLIS.between(startTime, endTime); //Ho fem amb milisegons pq si la unitat son segons (o alguna més gran), serà 0 en temps d'execucio, per tant, saltarà invalidPairingArgsException
+    }
 
+    private BigDecimal calculateImport(int duration, float distance) {
+        BigDecimal durationPrice = BigDecimal.valueOf(duration);
+        BigDecimal distancePrice = BigDecimal.valueOf(distance);
+        return durationPrice.add(distancePrice); //Per simplificar, l'import és la suma de la durada i la distància
+    }
+
+    public  Float calculateDistance(GeographicPoint point1, GeographicPoint point2) {
+        double lat1Rad = Math.toRadians(point1.getLatitude());
+        double lon1Rad = Math.toRadians(point1.getLongitude());
+        double lat2Rad = Math.toRadians(point2.getLatitude());
+        double lon2Rad = Math.toRadians(point2.getLongitude());
+
+        double deltaLat = lat2Rad - lat1Rad;
+        double deltaLon = lon2Rad - lon1Rad;
+
+        // Fórmula de Haversine
+        double a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2)
+                + Math.cos(lat1Rad) * Math.cos(lat2Rad)
+                * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        double distance = EARTH_RADIUS_KM * c;
+
+        return (float) distance;
+    }
+
+    //Injeccio de dependències
+    public void setQrDecoder(QRDecoder qrDecoder) {
+        this.qrDecoder = qrDecoder;
+    }
+
+    public void setUnbondedBTSignal(UnbondedBTSignal unbondedBTSignal) {
+        this.unbondedBTSignal = unbondedBTSignal;
+    }
+
+    public void setServer(Server server) {
+        this.server = server;
+    }
+
+    public void setUserAccount(UserAccount userAccount) {
+        this.userAccount = userAccount;
+    }
+
+    public void setArduinoMicroController(ArduinoMicroController arduinoMicroController) {
+        this.arduinoMicroController = arduinoMicroController;
+    }
+
+    public void setPmVehicle(PMVehicle pmVehicle) {
+        this.pmVehicle = pmVehicle;
+    }
+
+    public void setBufferedImage(BufferedImage bufferedImage) {
+        this.bufferedImage = bufferedImage;
+    }
+
+    public void setServiceID(ServiceID serviceID) {
+        this.serviceID = serviceID;
+    }
+
+    public void setWallet(Wallet wallet) {
+        this.wallet = wallet;
+    }
 }
 
 

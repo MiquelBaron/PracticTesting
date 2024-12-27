@@ -1,3 +1,4 @@
+
 package Tests;
 
 import data.*;
@@ -6,6 +7,7 @@ import exceptions.InvalidPairingArgsException;
 import exceptions.PMVNotAvailException;
 import exceptions.ProceduralException;
 import micromobility.JourneyRealizeHandler;
+import micromobility.PMVehicle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import services.Server;
@@ -23,58 +25,45 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 public class TestScanQrFail {
-    String idVeh;
-    String idUs;
-    String idSt;
     JourneyRealizeHandler journeyRealizeHandler;
-    Server server;
-    UserAccount userAccount;
-    ArduinoMicroController arduinoMicroController;
-    QRDecoder qrDecoderExit;
-    UnbondedBTSignal unbondedBTSignal;
     VehicleID vehicleID;
-    BufferedImage bufferedImage;
-    QRDecoder qrDecoderFail;
-    StationID st;
+    PMVehicle pmVehicle;
+    UserAccount userAccount;
     GeographicPoint geographicPoint;
-    ServiceID serviceID;
+    StationID st;
 
     @BeforeEach
-    public void setUp() throws IOException {
-        this.idSt = "100";
-        this.idUs = "10";
-        this.idVeh = "1";
-        this.geographicPoint = new GeographicPoint(10, 10);
+    public void setUp() throws ConnectException {
+        st = new StationID("1", new GeographicPoint(10,10));
+        vehicleID = new VehicleID("1"); //Vehicle que ja tenim emmagatzemat a servidor
+        geographicPoint = new GeographicPoint(10,10);
+        userAccount = new UserAccount("1");
 
-        File qrFile = new File("QrImage.png");
-        this.bufferedImage = ImageIO.read(qrFile);
-        this.server = new ServerDoubleFail();
+        ArduinoMicroController arduinoMicroController = new ArduinoMicroControllerDoubleExit();
+        QRDecoder qrDecoder = new QRDecoderDoubleExit(vehicleID);
+        Server server = new ServerDouble();
+        UnbondedBTSignal unbondedBTSignal=new UnbondedBTSignalDoubleExit();
 
-        this.st = new StationID(idSt);
-        this.vehicleID = new VehicleID(idVeh);
-        this.userAccount = new UserAccount(idUs);
-        this.serviceID=new ServiceID("1");
+        pmVehicle=new PMVehicle(vehicleID,geographicPoint);
 
-        this.qrDecoderExit = new QRDecoderDoubleExit(this.vehicleID);
-        this.unbondedBTSignal = new UnbondedBTSignalDoubleExit();
-        this.arduinoMicroController = new ArduinoMicroControllerDoubleExit();
 
+        this.journeyRealizeHandler= new JourneyRealizeHandler();
+        journeyRealizeHandler.setUnbondedBTSignal(unbondedBTSignal);
+        journeyRealizeHandler.setServer(server);
+        journeyRealizeHandler.setArduinoMicroController(arduinoMicroController);
+        journeyRealizeHandler.setQrDecoder(qrDecoder);
+        journeyRealizeHandler.setPmVehicle(pmVehicle);
+        journeyRealizeHandler.setUserAccount(userAccount);
     }
 
     @Test
-    public void testScanQrThrowsPairingProceduralException() {
-        this.qrDecoderExit = new QRDecoderDoubleExit(this.vehicleID);
-        this.arduinoMicroController = new ArduinoMicroControllerDoubleExit();
-        this.server = new ServerDouble();
-        this.journeyRealizeHandler = new JourneyRealizeHandler(qrDecoderExit, unbondedBTSignal, server, userAccount, arduinoMicroController, geographicPoint, bufferedImage,serviceID);
-
+    public void testScanQrThrowsProceduralException() {
         assertThrows(ProceduralException.class, () -> journeyRealizeHandler.scanQR());
     }
 
     @Test
-    public void testScanQrThrowsCorruptedImageException() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
-        this.qrDecoderFail = new QRDecoderDoubleFail();
-        this.journeyRealizeHandler = new JourneyRealizeHandler(qrDecoderFail, unbondedBTSignal, server, userAccount, arduinoMicroController, geographicPoint, bufferedImage,serviceID);
+    public void testScanQrThrowsCorruptedImageException() throws ConnectException {
+        journeyRealizeHandler.setQrDecoder(new QRDecoderDoubleFail());
         journeyRealizeHandler.broadcastStationID(st);
 
         assertThrows(CorruptedImgException.class, () -> journeyRealizeHandler.scanQR());
@@ -83,10 +72,7 @@ public class TestScanQrFail {
 
     @Test
     public void testScanQrThrowsPMVNotAvailException() throws ConnectException {
-        this.qrDecoderExit = new QRDecoderDoubleExit(this.vehicleID);
-        this.arduinoMicroController = new ArduinoMicroControllerDoubleExit();
-        this.server = new ServerDoubleFail();
-        this.journeyRealizeHandler = new JourneyRealizeHandler(qrDecoderExit, unbondedBTSignal, server, userAccount, arduinoMicroController, geographicPoint, bufferedImage,serviceID);
+        journeyRealizeHandler.setServer(new ServerDoubleFail());
         journeyRealizeHandler.broadcastStationID(st);
 
         assertThrows(PMVNotAvailException.class, () -> journeyRealizeHandler.scanQR());
@@ -94,11 +80,8 @@ public class TestScanQrFail {
 
 
     @Test
-    public void testScanQrThrowsConnectException() throws ConnectException, CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException {
-        this.qrDecoderExit = new QRDecoderDoubleExit(this.vehicleID);
-        this.arduinoMicroController = new ArduinoMicroControllerDoubleFail();
-        this.server = new ServerDouble();
-        this.journeyRealizeHandler = new JourneyRealizeHandler(qrDecoderExit, unbondedBTSignal, server, userAccount, arduinoMicroController, geographicPoint, bufferedImage,serviceID);
+    public void testScanQrThrowsConnectException() throws ConnectException{
+        journeyRealizeHandler.setArduinoMicroController(new ArduinoMicroControllerDoubleFail());
         journeyRealizeHandler.broadcastStationID(st);
 
         assertThrows(ConnectException.class, () -> journeyRealizeHandler.scanQR());
@@ -107,10 +90,6 @@ public class TestScanQrFail {
 
     @Test
     public void testScanQrThrowsInvalidPairingArgsException() throws ConnectException {
-        this.qrDecoderExit = new QRDecoderDoubleExit(this.vehicleID);
-        this.arduinoMicroController = new ArduinoMicroControllerDoubleExit();
-        this.server = new ServerDouble();
-        this.journeyRealizeHandler = new JourneyRealizeHandler(qrDecoderExit, unbondedBTSignal, server, userAccount, arduinoMicroController, geographicPoint, bufferedImage,serviceID);
         journeyRealizeHandler.setUserAccount(null);
         journeyRealizeHandler.broadcastStationID(st);
 

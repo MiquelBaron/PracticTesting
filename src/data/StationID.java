@@ -5,13 +5,16 @@ import java.util.zip.GZIPOutputStream;
 public class StationID {
     private String id;
     private GeographicPoint loc;
-    public StationID(String id, GeographicPoint loc){
+
+    public StationID(String id, GeographicPoint loc) {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("StationID cannot be null or empty");
         }
         this.id = id;
+        this.loc=loc;
     }
-    public String getId(){
+
+    public String getId() {
         return this.id;
     }
 
@@ -32,5 +35,8 @@ public class StationID {
     public String toString() {
         return "StationID{" + "id='" + id + '\'' + '}';
     }
-    GeographicPoint getLoc { return this.loc} ;
+
+    public GeographicPoint getLoc() {
+        return loc;
+    }
 }

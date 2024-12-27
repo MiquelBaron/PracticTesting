@@ -9,10 +9,19 @@ public class PMVehicle {
     private VehicleID veh;
     private PMVState state;
     private GeographicPoint geographicPoint;
+    private UserAccount userAccount;
     public PMVehicle(VehicleID veh, GeographicPoint geographicPoint){
         this.geographicPoint=geographicPoint;
         this.veh=veh;
         this.state=PMVState.Available;
+    }
+
+    public void setUserAccount(UserAccount userAccount) {
+        this.userAccount = userAccount;
+    }
+
+    public UserAccount getUserAccount() {
+        return userAccount;
     }
 
     // All the getter methods

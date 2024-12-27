@@ -25,7 +25,7 @@ public class ServerDouble implements Server{
 
     public void checkPMVAvail(VehicleID vhID)
             throws PMVNotAvailException, ConnectException{
-        if(!disponibility.get(vhID)){
+        if(!disponibility.get(vhID) || !disponibility.containsKey(vhID)){
             throw new PMVNotAvailException("Vehicle with id "+vhID.getId()+" is not avaliable");
         }
     }
@@ -63,6 +63,7 @@ public class ServerDouble implements Server{
     public void setPairing(UserAccount user, VehicleID veh, StationID st,
                     GeographicPoint loc, LocalDateTime date){
         pairings.put(user,veh);
+        disponibility.replace(veh,false);
     }
     public void unPairRegisterService(UserAccount user, VehicleID veh, StationID st, GeographicPoint loc, LocalDateTime date) throws PairingNotFoundException{
         pairings.remove(user);
