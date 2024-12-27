@@ -1,8 +1,11 @@
 package data;
 
+import java.util.zip.GZIPOutputStream;
+
 public class StationID {
     private String id;
-    public StationID(String id){
+    private GeographicPoint loc;
+    public StationID(String id, GeographicPoint loc){
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("StationID cannot be null or empty");
         }
@@ -29,4 +32,5 @@ public class StationID {
     public String toString() {
         return "StationID{" + "id='" + id + '\'' + '}';
     }
+    GeographicPoint getLoc { return this.loc} ;
 }

@@ -31,7 +31,7 @@ public class JourneyRealizeHandler {
     private BigDecimal impAmount;
     private final GeographicPoint geographicPoint; //Localitzacio del PMVehicle
 
-    public JourneyRealizeHandler(QRDecoder qrDecoder, UnbondedBTSignal btSignal, Server server, UserAccount userAccount, ArduinoMicroController arduinoMicroController, GeographicPoint geographicPoint, BufferedImage bufferedImage, ServiceID serviceID) {
+    public JourneyRealizeHandler(QRDecoder qrDecoder, UnbondedBTSignal btSignal, Server server, UserAccount userAccount, ArduinoMicroController arduinoMicroController, GeographicPoint geographicPoint, BufferedImage bufferedImage, ServiceID serviceID, JourneyService journeyService) {
         this.qrDecoder = qrDecoder;
         this.unbondedBTSignal = btSignal;
         this.server = server;
@@ -40,8 +40,11 @@ public class JourneyRealizeHandler {
         this.geographicPoint = geographicPoint;
         this.bufferedImage = bufferedImage;
         this.serviceID= serviceID;
+        this.journeyService=journeyService;
         journeyService = null;
     }
+
+
 
 
     public void scanQR()
@@ -89,7 +92,7 @@ public class JourneyRealizeHandler {
 
         this.impAmount = calculateImport(duration, distance);
 
-        addValuesToFinishedJourneyService(endDate, endDate.getHour(), endPoint, distance, duration,avSpeed,impAmount), serviceID; //Extract method
+        addValuesToFinishedJourneyService(endDate, endDate.getHour(), endPoint, distance, duration,avSpeed,impAmount, serviceID); //Extract method
 
         server.stopPairing(userAccount, vehicleID, stationID, endPoint, endDate, avSpeed, distance, duration, impAmount);
 

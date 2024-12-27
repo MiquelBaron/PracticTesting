@@ -146,4 +146,8 @@ public class JourneyService {
         this.inProgress = inProgress;
     }
     public void setServiceID(ServiceID serviceID){ this.serviceID=serviceID;}
+
+    public ServiceID getServiceID() {
+        return serviceID;
+    }
 }

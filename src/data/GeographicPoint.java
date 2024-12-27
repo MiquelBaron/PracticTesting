@@ -28,7 +28,7 @@ public final class GeographicPoint {
         return longitude;
     }
 
-    public static Float calculateDistance(GeographicPoint point1, GeographicPoint point2) {
+    public  Float calculateDistance(GeographicPoint point1, GeographicPoint point2) {
         double lat1Rad = Math.toRadians(point1.getLatitude());
         double lon1Rad = Math.toRadians(point1.getLongitude());
         double lat2Rad = Math.toRadians(point2.getLatitude());
