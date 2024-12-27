@@ -13,6 +13,7 @@ public class ServerDouble implements Server{
     private Map<VehicleID, Boolean> disponibility; //True = disponible - False = no disponible
     private Map<UserAccount, VehicleID> pairings;
     private Map<VehicleID, StationID> vehicleLocation;
+    private char paymentOption;
 
     public ServerDouble(){
         this.disponibility = new HashMap<>();
@@ -50,8 +51,14 @@ public class ServerDouble implements Server{
 
         unPairRegisterService(user,veh,st,loc,date);
         registerLocation(veh,st);
-
     }
+
+    @Override
+    public void registerPayment(ServiceID serviceID, UserAccount userAccount, BigDecimal imp, char payMeth) {
+        paymentOption=payMeth;
+    }
+
+
     // Internal operations
     public void setPairing(UserAccount user, VehicleID veh, StationID st,
                     GeographicPoint loc, LocalDateTime date){
@@ -63,10 +70,6 @@ public class ServerDouble implements Server{
     }
     public void registerLocation(VehicleID veh, StationID st){
         vehicleLocation.put(veh,st);
-    }
-
-    public void addVehicle(VehicleID vehicleID, boolean boolea){
-        disponibility.put(vehicleID,boolea);
     }
 
 }

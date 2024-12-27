@@ -1,6 +1,7 @@
 package micromobility;
 
 import data.GeographicPoint;
+import data.ServiceID;
 import data.UserAccount;
 import data.VehicleID;
 
@@ -12,7 +13,6 @@ public class JourneyService {
     // Atributos de la clase
     private UserAccount userAccount;
     private VehicleID vehicleID;
-
     private LocalDateTime initDate;
     private LocalDateTime endDate;
     private int initHour;
@@ -24,6 +24,7 @@ public class JourneyService {
     private GeographicPoint endPoint;
     private BigDecimal importAmount;
     private boolean inProgress;
+    private ServiceID serviceID;
 
 
     public JourneyService() {
@@ -38,6 +39,7 @@ public class JourneyService {
         this.endPoint = null;
         this.importAmount = BigDecimal.ZERO;
         this.inProgress = false;
+        this.serviceID=null;
     }
 
     //Injectar dependències
@@ -143,4 +145,5 @@ public class JourneyService {
     public void setInProgress(boolean inProgress) {
         this.inProgress = inProgress;
     }
+    public void setServiceID(ServiceID serviceID){ this.serviceID=serviceID;}
 }

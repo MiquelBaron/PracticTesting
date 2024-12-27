@@ -1,4 +1,5 @@
 package Tests;
+import com.sun.tools.javac.Main;
 import data.*;
 import exceptions.*;
 import micromobility.*;
@@ -12,6 +13,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
+
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,8 +32,10 @@ public class TestScanQrExit {
     BufferedImage bufferedImage;
     StationID st;
     GeographicPoint geographicPoint;
+     
     @BeforeEach
     public void setUp() throws IOException {
+
         this.idSt="100";
         this.idUs="10";
         this.idVeh="1";

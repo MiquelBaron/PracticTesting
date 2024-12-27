@@ -1,10 +1,8 @@
 package micromobility;
 
-import data.GeographicPoint;
-import data.StationID;
-import data.UserAccount;
-import data.VehicleID;
+import data.*;
 import exceptions.*;
+import micromobility.payment.*;
 import services.Server;
 import services.smartfeatures.ArduinoMicroController;
 import services.smartfeatures.QRDecoder;
@@ -18,7 +16,6 @@ import java.time.temporal.ChronoUnit;
 
 public class JourneyRealizeHandler {
 
-    private static final double EARTH_RADIUS_KM = 6371.0;
     private final Server server;
     private final QRDecoder qrDecoder;
     private final UnbondedBTSignal unbondedBTSignal;
@@ -29,9 +26,12 @@ public class JourneyRealizeHandler {
     private VehicleID vehicleID;
     private final BufferedImage bufferedImage;
     private StationID stationID;
+    private ServiceID serviceID;
+    private Wallet wallet;
+    private BigDecimal impAmount;
     private final GeographicPoint geographicPoint; //Localitzacio del PMVehicle
 
-    public JourneyRealizeHandler(QRDecoder qrDecoder, UnbondedBTSignal btSignal, Server server, UserAccount userAccount, ArduinoMicroController arduinoMicroController, GeographicPoint geographicPoint, BufferedImage bufferedImage) {
+    public JourneyRealizeHandler(QRDecoder qrDecoder, UnbondedBTSignal btSignal, Server server, UserAccount userAccount, ArduinoMicroController arduinoMicroController, GeographicPoint geographicPoint, BufferedImage bufferedImage, ServiceID serviceID) {
         this.qrDecoder = qrDecoder;
         this.unbondedBTSignal = btSignal;
         this.server = server;
@@ -39,6 +39,7 @@ public class JourneyRealizeHandler {
         this.arduinoMicroController = arduinoMicroController;
         this.geographicPoint = geographicPoint;
         this.bufferedImage = bufferedImage;
+        this.serviceID= serviceID;
         journeyService = null;
     }
 
@@ -86,9 +87,9 @@ public class JourneyRealizeHandler {
         float distance = geographicPoint.calculateDistance(journeyService.getOriginPoint(), endPoint);
         float avSpeed = distance / (float) duration;
 
-        BigDecimal impAmount = calculateImport(duration, distance);
+        this.impAmount = calculateImport(duration, distance);
 
-        addValuesToFinishedJourneyService(endDate, endDate.getHour(), endPoint, distance, duration,avSpeed,impAmount); //Extract method
+        addValuesToFinishedJourneyService(endDate, endDate.getHour(), endPoint, distance, duration,avSpeed,impAmount), serviceID; //Extract method
 
         server.stopPairing(userAccount, vehicleID, stationID, endPoint, endDate, avSpeed, distance, duration, impAmount);
 
@@ -136,6 +137,23 @@ public class JourneyRealizeHandler {
         }
     }
 
+    public void selectPaymentMethod(char opt) throws NotEnoughWalletException, ProceduralException {
+        if(!pmVehicle.getState().equals(PMVState.Available)){
+            throw new ProceduralException("Procedural exception");
+        }
+        WalletPayment walletPayment = new WalletPayment();
+        walletPayment.setImpAmount(this.impAmount);
+        realizePayment(this.impAmount);
+        server.registerPayment(serviceID, userAccount,impAmount,opt);
+    }
+
+    public void realizePayment(BigDecimal imp) throws NotEnoughWalletException {
+        wallet.deduct(imp);
+    }
+
+    public void undoBtConnection(){
+        arduinoMicroController.undoBTconnection();
+    }
 
     // Internal operations
 
@@ -180,7 +198,7 @@ public class JourneyRealizeHandler {
         journeyService.setUserAccount(userAccount);
         journeyService.setVehicleID(vehicleID);
     }
-    private void addValuesToFinishedJourneyService(LocalDateTime endDate, int hour, GeographicPoint endPoint, float distance, int duration, float avSpeed, BigDecimal imp) {
+    private void addValuesToFinishedJourneyService(LocalDateTime endDate, int hour, GeographicPoint endPoint, float distance, int duration, float avSpeed, BigDecimal imp, ServiceID serviceID) {
         journeyService.setEndDate(endDate);
         journeyService.setEndHour(hour);
         journeyService.setEndPoint(endPoint);
@@ -188,6 +206,7 @@ public class JourneyRealizeHandler {
         journeyService.setDuration(duration);
         journeyService.setAvgSpeed(avSpeed);
         journeyService.setImportAmount(imp);
+        journeyService.setServiceID(serviceID);
     }
 
 }

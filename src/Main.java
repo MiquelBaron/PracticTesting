@@ -1,27 +1,21 @@
-import data.GeographicPoint;
-import data.StationID;
-import data.UserAccount;
-import data.VehicleID;
+import data.*;
 import micromobility.JourneyRealizeHandler;
-import micromobility.PMVehicle;
 import services.Server;
 import services.ServerDouble;
 import services.smartfeatures.*;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.util.Scanner;
 
 
-public class Main  {
+public class Main {
 
-
+    JourneyRealizeHandler journeyRealizeHandler;
     public Main() throws IOException {
 
-        JourneyRealizeHandler journeyRealizeHandler = init();
+        init();
 
         try {
             StationID originStation = new StationID("1");
@@ -39,7 +33,7 @@ public class Main  {
         }
     }
 
-    private static JourneyRealizeHandler init() throws IOException {
+    public void  init() throws IOException {
 
         UserAccount userAccount = new UserAccount("1");
         GeographicPoint geographicPoint = new GeographicPoint(10,10);
@@ -49,11 +43,12 @@ public class Main  {
         UnbondedBTSignal unbondedBTSignal=new UnbondedBTSignalDoubleExit();
         Server server=new ServerDouble();
         QRDecoder qrDecoder = new QRDecoderDoubleExit(vehicleID);
+        ServiceID serviceID = new ServiceID("1");
 
         File qrFile = new File("QrImage.png");
         BufferedImage bufferedImage= ImageIO.read(qrFile);
 
-        return new JourneyRealizeHandler(qrDecoder,unbondedBTSignal, server,userAccount,arduinoMicroController,geographicPoint,bufferedImage);
+        this.journeyRealizeHandler= new JourneyRealizeHandler(qrDecoder,unbondedBTSignal, server,userAccount,arduinoMicroController,geographicPoint,bufferedImage,serviceID);
     }
 
 }

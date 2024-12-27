@@ -1,10 +1,7 @@
 package Tests;
 
 import Tests.Interfaces.BroadcastStationIDInterface;
-import data.GeographicPoint;
-import data.StationID;
-import data.UserAccount;
-import data.VehicleID;
+import data.*;
 import micromobility.JourneyRealizeHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +32,7 @@ public class TestBroadcastStationIDExit implements BroadcastStationIDInterface {
     BufferedImage bufferedImage;
     StationID st;
     GeographicPoint geographicPoint;
+    ServiceID serviceID;
     @BeforeEach
     public void setUp() throws IOException {
         this.idSt="100";
@@ -48,12 +46,13 @@ public class TestBroadcastStationIDExit implements BroadcastStationIDInterface {
         this.st=new StationID(idSt);
         this.vehicleID=new VehicleID(idVeh);
         this.userAccount=new UserAccount(idUs);
+        this.serviceID=new ServiceID("1");
 
         this.qrDecoderExit = new QRDecoderDoubleExit(this.vehicleID);
         this.unbondedBTSignal = new UnbondedBTSignalDoubleExit();
         this.server=new ServerDouble();
         this.arduinoMicroController=new ArduinoMicroControllerDoubleExit();
-        this.journeyRealizeHandler=new JourneyRealizeHandler(qrDecoderExit,unbondedBTSignal,server,userAccount,arduinoMicroController,geographicPoint,bufferedImage );
+        this.journeyRealizeHandler=new JourneyRealizeHandler(qrDecoderExit,unbondedBTSignal,server,userAccount,arduinoMicroController,geographicPoint,bufferedImage,serviceID );
     }
 
     @Override
