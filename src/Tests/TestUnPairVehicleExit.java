@@ -40,7 +40,7 @@ public class TestUnPairVehicleExit {
 
         ArduinoMicroController arduinoMicroController = new ArduinoMicroControllerDoubleExit();
         QRDecoder qrDecoder = new QRDecoderDoubleExit(vehicleID);
-        Server server = new ServerDouble();
+        Server server = new ServerDouble(false);
         UnbondedBTSignal unbondedBTSignal=new UnbondedBTSignalDoubleExit();
 
         pmVehicle=new PMVehicle(vehicleID,geographicPoint);
@@ -94,9 +94,9 @@ public class TestUnPairVehicleExit {
     }
 
     @Test
-    public void testJourneyServiceHasBeenDeleted() throws PairingNotFoundException, InvalidPairingArgsException, ProceduralException, ConnectException {
+    public void testJourneyServiceIsNotInProgress() throws PairingNotFoundException, InvalidPairingArgsException, ProceduralException, ConnectException {
         journeyRealizeHandler.unPairVehicle();
-        assertNull(journeyRealizeHandler.getJourneyService());
+        assertFalse(journeyRealizeHandler.getJourneyService().isInProgress());
     }
 }
 

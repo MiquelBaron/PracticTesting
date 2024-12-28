@@ -94,7 +94,6 @@ public class JourneyRealizeHandler {
         pmVehicle.setUserAccount(null);
 
         journeyService.setInProgress(false);
-        journeyService = null;
     }
 
 

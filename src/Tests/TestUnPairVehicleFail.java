@@ -38,7 +38,7 @@ public class TestUnPairVehicleFail {
 
         ArduinoMicroController arduinoMicroController = new ArduinoMicroControllerDoubleExit();
         QRDecoder qrDecoder = new QRDecoderDoubleExit(vehicleID);
-        Server server = new ServerDouble();
+        Server server = new ServerDouble(false);
         UnbondedBTSignal unbondedBTSignal=new UnbondedBTSignalDoubleExit();
 
         pmVehicle=new PMVehicle(vehicleID,geographicPoint);
@@ -55,6 +55,7 @@ public class TestUnPairVehicleFail {
         journeyRealizeHandler.broadcastStationID(initStation);
         journeyRealizeHandler.scanQR();
         journeyRealizeHandler.startDriving();
+
         journeyRealizeHandler.setServer(new ServerDoubleFail());
     }
 
@@ -83,7 +84,6 @@ public class TestUnPairVehicleFail {
     public void testConnectException() throws ConnectException, ProceduralException, PMVPhisicalException {
         journeyRealizeHandler.broadcastStationID(endStation);
         journeyRealizeHandler.stopDriving();
-        journeyRealizeHandler.setServer(new ServerDoubleFail());
         assertThrows(ConnectException.class, ()-> journeyRealizeHandler.unPairVehicle());
     }
 

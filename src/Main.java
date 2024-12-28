@@ -18,7 +18,6 @@ public class Main {
 
     JourneyRealizeHandler journeyRealizeHandler;
     public Main() throws IOException {
-
         init();
 
         try {
@@ -32,9 +31,10 @@ public class Main {
             journeyRealizeHandler.broadcastStationID(endStation);
             journeyRealizeHandler.stopDriving();
             journeyRealizeHandler.unPairVehicle();
+            journeyRealizeHandler.undoBtConnection();
 
         }catch(Exception e){
-            System.out.println("Error durant l'execucio");
+            System.out.println("Error durant l'execució");
         }
     }
 
@@ -50,7 +50,7 @@ public class Main {
 
         ArduinoMicroController arduinoMicroController= new ArduinoMicroControllerDoubleExit();
         UnbondedBTSignal unbondedBTSignal=new UnbondedBTSignalDoubleExit();
-        Server server=new ServerDouble();
+        Server server=new ServerDouble(false);
         QRDecoder qrDecoder = new QRDecoderDoubleExit(vehicleID);
 
         File qrFile = new File("QrImage.png");

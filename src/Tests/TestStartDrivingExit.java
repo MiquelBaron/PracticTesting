@@ -39,7 +39,7 @@ public class TestStartDrivingExit {
 
         ArduinoMicroController arduinoMicroController = new ArduinoMicroControllerDoubleExit();
         QRDecoder qrDecoder = new QRDecoderDoubleExit(vehicleID);
-        Server server = new ServerDouble();
+        Server server = new ServerDouble(false);
         UnbondedBTSignal unbondedBTSignal = new UnbondedBTSignalDoubleExit();
 
         pmVehicle = new PMVehicle(vehicleID, geographicPoint);
