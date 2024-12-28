@@ -71,16 +71,40 @@ public class TestScanQrFail {
 
 
     @Test
-    public void testScanQrThrowsPMVNotAvailException() throws ConnectException {
-        journeyRealizeHandler.setServer(new ServerDoubleFail());
+    public void testUnAvailableVehicleThrowsPMVNotAvailException() throws ConnectException {
+        VehicleID vehicleID1 = new VehicleID("3"); //Registered in server as not available
+        PMVehicle pmVehicle1 = new PMVehicle(vehicleID1,geographicPoint);
+
+        journeyRealizeHandler.setPmVehicle(pmVehicle1);
+        journeyRealizeHandler.setQrDecoder(new QRDecoderDoubleExit(vehicleID1));
         journeyRealizeHandler.broadcastStationID(st);
 
         assertThrows(PMVNotAvailException.class, () -> journeyRealizeHandler.scanQR());
     }
 
+    @Test
+    public void testUnRegisteredVehicleThrowsPMVNotAvailException() throws ConnectException {
+        VehicleID vehicleID2 = new VehicleID("4"); //Not registered in server
+        PMVehicle pmVehicle2 = new PMVehicle(vehicleID2, geographicPoint);
+
+        journeyRealizeHandler.setPmVehicle(pmVehicle2);
+        journeyRealizeHandler.setQrDecoder(new QRDecoderDoubleExit(vehicleID2));
+        journeyRealizeHandler.broadcastStationID(st);
+
+        assertThrows(PMVNotAvailException.class, () -> journeyRealizeHandler.scanQR());
+    }
 
     @Test
-    public void testScanQrThrowsConnectException() throws ConnectException{
+    public void testCheckPMVAvailThrowsConnectException() throws ConnectException {
+        journeyRealizeHandler.setServer(new ServerDouble(true));
+        journeyRealizeHandler.broadcastStationID(st);
+
+        assertThrows(ConnectException.class,()->journeyRealizeHandler.scanQR());
+    }
+
+
+    @Test
+    public void testScanQrArduinoThrowsConnectException() throws ConnectException{
         journeyRealizeHandler.setArduinoMicroController(new ArduinoMicroControllerDoubleFail(true,false));
         journeyRealizeHandler.broadcastStationID(st);
 

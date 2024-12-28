@@ -7,7 +7,7 @@ public class StationID {
     private GeographicPoint loc;
 
     public StationID(String id, GeographicPoint loc) {
-        if (id == null || id.isEmpty()) {
+        if (id == null || loc==null || id.isEmpty()) {
             throw new IllegalArgumentException("StationID cannot be null or empty");
         }
         this.id = id;
@@ -18,13 +18,15 @@ public class StationID {
         return this.id;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         StationID stationID = (StationID) o;
-        return id.equals(stationID.id);
+        return id.equals(stationID.id) && loc.equals(stationID.loc);
     }
+
 
     @Override
     public int hashCode() {

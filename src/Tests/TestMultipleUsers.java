@@ -38,7 +38,7 @@ public class TestMultipleUsers {
     public void setUp() throws ConnectException, CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, PMVPhisicalException {
         initStation = new StationID("1", new GeographicPoint(10, 10));
         endStation1 = new StationID("2", new GeographicPoint(20, 20));
-        endStation2 = new StationID("3", new GeographicPoint(85, 85));
+        endStation2 = new StationID("3", new GeographicPoint(30, 30));
 
         vehicleID1 = new VehicleID("1");
         vehicleID2 = new VehicleID("2");
@@ -151,6 +151,8 @@ public class TestMultipleUsers {
         float distance2=handler2.getJourneyService().getDistance();
         assertTrue(distance2>distance1);
     }
+
+
 
 
 }

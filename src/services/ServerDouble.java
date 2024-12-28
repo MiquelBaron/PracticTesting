@@ -22,6 +22,7 @@ public class ServerDouble implements Server{
         this.vehicles = new HashMap<>();
         this.vehicles.put(new VehicleID("1"),true);
         this.vehicles.put(new VehicleID("2"),true);
+        this.vehicles.put(new VehicleID("3"),false);
 
         this.pairings = new HashMap<>();
         pairings.put(new UserAccount("1"),null);
@@ -42,7 +43,7 @@ public class ServerDouble implements Server{
     public void checkPMVAvail(VehicleID vhID)
             throws PMVNotAvailException, ConnectException{
         if(connectException){throw new ConnectException();}
-        if(!vehicles.get(vhID) || !vehicles.containsKey(vhID)){
+        if(!vehicles.containsKey(vhID) || !vehicles.get(vhID)){
             throw new PMVNotAvailException("Vehicle with id "+vhID.getId()+" is not avaliable");
         }
     }
@@ -53,7 +54,7 @@ public class ServerDouble implements Server{
         if(connectException){throw new ConnectException("Connect exception");}
 
         //Check null values
-        if(user==null || veh==null || st==null || loc==null || date==null || st.getLoc()==null){
+        if(user==null || veh==null || st==null || loc==null || date==null){
             throw new InvalidPairingArgsException("Invalid arguments");
         }
         //Check if user & vehicle & station are registered in the server
