@@ -42,7 +42,7 @@ public class ServerDouble implements Server{
                             GeographicPoint loc, LocalDateTime date, float avSp, float dist,
                             int dur, BigDecimal imp)
             throws InvalidPairingArgsException, ConnectException, PairingNotFoundException {
-        if(user==null || veh==null || st==null || loc==null || date==null || avSp==0.0 || dist==0.0 || dur==0.0 || imp==null){
+        if(user==null || veh==null || st==null || loc==null || date==null || avSp==0.0 || dist==0.0 || imp==null){
             throw new InvalidPairingArgsException("Invalid pairing arguments");
         }
         if(!pairings.containsKey(user)){
@@ -72,6 +72,7 @@ public class ServerDouble implements Server{
     public void registerLocation(VehicleID veh, StationID st){
         vehicleLocation.put(veh,st);
     }
+
 
 }
 

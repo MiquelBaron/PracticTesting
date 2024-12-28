@@ -18,5 +18,9 @@ public class Wallet {
         }
         balance = balance.subtract(imp);
     }
+
+    public BigDecimal getBalance() {
+        return balance;
+    }
 }
 

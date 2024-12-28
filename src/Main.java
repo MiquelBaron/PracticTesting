@@ -25,6 +25,7 @@ public class Main {
             StationID originStation = new StationID("1", new GeographicPoint(10,10));
             StationID endStation = new StationID("2", new GeographicPoint(20,20));
 
+
             journeyRealizeHandler.broadcastStationID(originStation);
             journeyRealizeHandler.scanQR();
             journeyRealizeHandler.startDriving();

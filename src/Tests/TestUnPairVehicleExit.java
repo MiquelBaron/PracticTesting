@@ -30,7 +30,7 @@ public class TestUnPairVehicleExit {
     StationID endStation;
 
     @BeforeEach
-    public void setUp() throws ConnectException, CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException {
+    public void setUp() throws ConnectException, CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, PMVPhisicalException {
          initStation = new StationID("1", new GeographicPoint(10,10));
          endStation =new StationID("2", new GeographicPoint(20,20));
 
@@ -59,8 +59,6 @@ public class TestUnPairVehicleExit {
         journeyRealizeHandler.startDriving();
         journeyRealizeHandler.broadcastStationID(endStation);
         journeyRealizeHandler.stopDriving();
-
-
     }
 
     @Test
@@ -100,12 +98,6 @@ public class TestUnPairVehicleExit {
         journeyRealizeHandler.unPairVehicle();
         assertNull(journeyRealizeHandler.getJourneyService());
     }
-
-
-
-
-
-
 }
 
 

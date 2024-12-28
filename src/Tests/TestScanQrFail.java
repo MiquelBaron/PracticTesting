@@ -81,7 +81,7 @@ public class TestScanQrFail {
 
     @Test
     public void testScanQrThrowsConnectException() throws ConnectException{
-        journeyRealizeHandler.setArduinoMicroController(new ArduinoMicroControllerDoubleFail());
+        journeyRealizeHandler.setArduinoMicroController(new ArduinoMicroControllerDoubleFail(true,false));
         journeyRealizeHandler.broadcastStationID(st);
 
         assertThrows(ConnectException.class, () -> journeyRealizeHandler.scanQR());

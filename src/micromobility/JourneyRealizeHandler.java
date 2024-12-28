@@ -30,6 +30,7 @@ public class JourneyRealizeHandler {
     private ServiceID serviceID;
     private Wallet wallet;
     private BigDecimal impAmount;
+    private WalletPayment walletPayment;
 
 
     public JourneyRealizeHandler() {
@@ -105,31 +106,21 @@ public class JourneyRealizeHandler {
 
     // Input events from the Arduino microcontroller channel
     public void startDriving()
-            throws ConnectException, ProceduralException {
+            throws ConnectException, ProceduralException, PMVPhisicalException {
         if (pmVehicle.getState() != PMVState.NotAvailable || journeyService == null) {
             throw new ProceduralException("Procedural exception");
         }
-
-        try {
-            arduinoMicroController.startDriving();
-        } catch (PMVPhisicalException e) {
-            throw new ConnectException("Connect exception");
-        }
+        arduinoMicroController.startDriving();
         pmVehicle.setUnderWay();
         journeyService.setInProgress(true);
     }
 
     public void stopDriving()
-            throws ConnectException, ProceduralException {
+            throws ConnectException, ProceduralException, PMVPhisicalException {
         if (pmVehicle.getState() != PMVState.UnderWay || !journeyService.isInProgress()) {
             throw new ProceduralException("Procedural exception");
         }
-
-        try {
-            arduinoMicroController.stopDriving();
-        } catch (PMVPhisicalException e) {
-            throw new ConnectException("Connect exception");
-        }
+        arduinoMicroController.stopDriving();
     }
 
     public void selectPaymentMethod(char opt) throws NotEnoughWalletException, ProceduralException {
@@ -141,10 +132,10 @@ public class JourneyRealizeHandler {
     }
 
     public void realizePayment(BigDecimal imp) throws NotEnoughWalletException {
-        WalletPayment walletPayment=new WalletPayment(wallet);
+        walletPayment=new WalletPayment(wallet);
         walletPayment.setImpAmount(imp);
         walletPayment.realizeWalletPayment();
-        walletPayment.setJourneyService(journeyService);
+        walletPayment.setServiceID(serviceID);
     }
 
     public void undoBtConnection(){
@@ -152,7 +143,7 @@ public class JourneyRealizeHandler {
     }
 
 
-    //Getters pels tests
+    //Getters i setters pels tests
 
     public StationID getStationID() {
         return this.stationID;
@@ -169,6 +160,16 @@ public class JourneyRealizeHandler {
     public JourneyService getJourneyService() {
         return this.journeyService;
     }
+
+    public void setJourneyService(JourneyService journeyService){
+        this.journeyService=journeyService;
+    }
+
+    public void setImpAmount(BigDecimal impAmount){
+        this.impAmount=impAmount;
+    }
+    public WalletPayment getWalletPayment(){ return this.walletPayment;}
+
 
 
 
