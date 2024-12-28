@@ -12,10 +12,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import services.*;
 import services.smartfeatures.*;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.net.ConnectException;
 
 public class TestUnPairVehicleExit {
@@ -68,7 +64,7 @@ public class TestUnPairVehicleExit {
 
     @Test
     public void testJourneyServiceEndPoint() throws ConnectException, PairingNotFoundException, InvalidPairingArgsException, ProceduralException {
-        JourneyService journeyService=journeyRealizeHandler.getJourneyService();
+        JourneyService journeyService=journeyRealizeHandler.getLocalJourneyService();
         journeyRealizeHandler.unPairVehicle();
 
         assertEquals(endStation.getLoc(),journeyService.getEndPoint());
@@ -96,7 +92,7 @@ public class TestUnPairVehicleExit {
     @Test
     public void testJourneyServiceIsNotInProgress() throws PairingNotFoundException, InvalidPairingArgsException, ProceduralException, ConnectException {
         journeyRealizeHandler.unPairVehicle();
-        assertFalse(journeyRealizeHandler.getJourneyService().isInProgress());
+        assertFalse(journeyRealizeHandler.getLocalJourneyService().isInProgress());
     }
 }
 

@@ -1,6 +1,5 @@
 package Tests;
 
-import com.sun.tools.javac.Main;
 import data.GeographicPoint;
 import data.StationID;
 import data.UserAccount;
@@ -146,8 +145,8 @@ public class TestMultipleUsers {
         handler1.unPairVehicle();
         handler2.unPairVehicle();
 
-        float distance1=handler1.getJourneyService().getDistance();
-        float distance2=handler2.getJourneyService().getDistance();
+        float distance1=handler1.getLocalJourneyService().getDistance();
+        float distance2=handler2.getLocalJourneyService().getDistance();
         assertTrue(distance2>distance1);
     }
 

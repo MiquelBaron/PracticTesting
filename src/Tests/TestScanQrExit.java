@@ -1,5 +1,4 @@
 package Tests;
-import com.sun.tools.javac.Main;
 import data.*;
 import exceptions.*;
 import micromobility.*;
@@ -8,12 +7,7 @@ import org.junit.jupiter.api.Test;
 import services.*;
 import services.smartfeatures.*;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.net.ConnectException;
-import java.time.LocalDateTime;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -69,7 +63,7 @@ public class TestScanQrExit {
     public void testJourneyServiceNotNull() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
         journeyRealizeHandler.scanQR();
 
-        assertNotNull(journeyRealizeHandler.getJourneyService());
+        assertNotNull(journeyRealizeHandler.getLocalJourneyService());
     }
 
     @Test
@@ -82,14 +76,14 @@ public class TestScanQrExit {
     @Test
     public void testJourneyServiceOriginPoint() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
         journeyRealizeHandler.scanQR();
-        JourneyService journeyService=journeyRealizeHandler.getJourneyService();
+        JourneyService journeyService=journeyRealizeHandler.getLocalJourneyService();
 
         assertEquals(geographicPoint, journeyService.getOriginPoint());
     }
     @Test
     public void testJourneyServiceIsAssociated() throws CorruptedImgException, InvalidPairingArgsException, ProceduralException, PMVNotAvailException, ConnectException {
         journeyRealizeHandler.scanQR();
-        JourneyService journeyService=journeyRealizeHandler.getJourneyService();
+        JourneyService journeyService=journeyRealizeHandler.getLocalJourneyService();
 
         assertEquals(userAccount,journeyService.getUserAccount());
         assertEquals(vehicleID,journeyService.getVehicleID());

@@ -63,9 +63,9 @@ public class TestStopDrivingFail {
 
     @Test
     public void testJourneyServiceNotInProgressThrowsProceduralException() {
-        JourneyService journeyService=journeyRealizeHandler.getJourneyService();
+        JourneyService journeyService=journeyRealizeHandler.getLocalJourneyService();
         journeyService.setInProgress(false);
-        journeyRealizeHandler.setJourneyService(journeyService);
+        journeyRealizeHandler.setLocalJourneyService(journeyService);
 
         assertThrows(ProceduralException.class, ()->journeyRealizeHandler.stopDriving());
     }

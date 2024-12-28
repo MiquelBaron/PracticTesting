@@ -71,7 +71,7 @@ public class TestStartDrivingExit {
 
     @Test
     public void testJourneyServiceIsInProgress() throws ProceduralException, PMVPhisicalException, ConnectException {
-        JourneyService journeyService=journeyRealizeHandler.getJourneyService();
+        JourneyService journeyService=journeyRealizeHandler.getLocalJourneyService();
         journeyRealizeHandler.startDriving();
 
         assertTrue(journeyService.isInProgress());

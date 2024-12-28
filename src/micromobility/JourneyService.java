@@ -27,19 +27,33 @@ public class JourneyService {
     private ServiceID serviceID;
 
 
-    public JourneyService() {
-        this.initDate = null;
-        this.endDate = null;
-        this.initHour = 0;
+
+
+    public JourneyService(LocalDateTime date, int hour, GeographicPoint geographicPoint,VehicleID vehicleID, UserAccount userAccount){
+        this.initDate=date;
+        this.initHour=hour;
+        this.originPoint = geographicPoint;
+        this.vehicleID=vehicleID;
+        this.userAccount=userAccount;
         this.endHour = 0;
         this.duration = 0;
         this.distance = 0.0f;
         this.avgSpeed = 0.0f;
-        this.originPoint = null;
         this.endPoint = null;
         this.importAmount = BigDecimal.ZERO;
         this.inProgress = false;
         this.serviceID=null;
+        this.serviceID= new ServiceID(String.valueOf(hashCode()));
+    }
+
+    public void completeJourneyService(LocalDateTime endDate, int endHour, int duration, float distance, float speed, GeographicPoint endPoint, BigDecimal importAmount){
+        this.endDate=endDate;
+        this.endHour=endHour;
+        this.duration=duration;
+        this.distance=distance;
+        this.avgSpeed=speed;
+        this.endPoint=endPoint;
+        this.importAmount=importAmount;
     }
 
     //Injectar dependències

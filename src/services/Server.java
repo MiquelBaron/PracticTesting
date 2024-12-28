@@ -4,6 +4,7 @@ import exceptions.InvalidPairingArgsException;
 import exceptions.InvalidPaymentArgsException;
 import exceptions.PMVNotAvailException;
 import exceptions.PairingNotFoundException;
+import micromobility.JourneyService;
 
 import java.math.BigDecimal;
 import java.net.*;
@@ -26,7 +27,7 @@ public interface Server {
     void setPairing(UserAccount user, VehicleID veh, StationID st,
                     GeographicPoint loc, LocalDateTime
                             date);
-    void unPairRegisterService(UserAccount user, VehicleID veh, StationID st, GeographicPoint loc, LocalDateTime date) throws PairingNotFoundException;
+    void unPairRegisterService(JourneyService s) throws PairingNotFoundException;
     void registerLocation(VehicleID veh, StationID st);
     void registerPayment(ServiceID serviceID, UserAccount userAccount, BigDecimal imp, char payMeth) throws InvalidPaymentArgsException;
 }

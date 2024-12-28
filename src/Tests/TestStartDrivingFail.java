@@ -60,7 +60,7 @@ public class TestStartDrivingFail {
         pmVehicle.setAvailb();
         assertThrows(ProceduralException.class, ()-> journeyRealizeHandler.unPairVehicle());
         pmVehicle.setNotAvailb();
-        journeyRealizeHandler.setJourneyService(null);
+        journeyRealizeHandler.setLocalJourneyService(null);
         assertThrows(ProceduralException.class, ()-> journeyRealizeHandler.unPairVehicle());
         journeyRealizeHandler.setArduinoMicroController(new ArduinoMicroControllerDoubleFail(false,false));
         assertThrows(ProceduralException.class, ()->journeyRealizeHandler.startDriving());

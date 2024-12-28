@@ -13,28 +13,45 @@ import java.math.BigDecimal;
 import java.net.ConnectException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.DayOfWeek;
 
 public class JourneyRealizeHandler {
-    private static final double EARTH_RADIUS_KM = 6371.0; //Per calcular la distancia a partir de longitud i latitud
+    private static final double EARTH_RADIUS_KM = 6371.0; //Value to transform latitud & longitud to distance
+    private static final BigDecimal PRICEDISTANCE = new BigDecimal(5);
+    private static final BigDecimal PRICETIME = new BigDecimal(10);
+    private static final BigDecimal DISCOUNT_PERCENTAGE = new BigDecimal("0.10"); // 10% discount percentage on weekend
+    private static final BigDecimal FINE_PERCENTAGE = new BigDecimal("0.20"); // 20% fine if speed limit is overpassed
+    private static final int SPEED_LIMIT = 40; //
 
+
+    private  BufferedImage bufferedImage;
+
+
+    //Package data
+    private ServiceID serviceID;
+    private UserAccount userAccount;
+    private VehicleID vehicleID;
+    private StationID stationID;
+
+    //Package services
     private Server server;
     private QRDecoder qrDecoder;
     private  UnbondedBTSignal unbondedBTSignal;
-    private UserAccount userAccount;
-    private JourneyService journeyService;
     private ArduinoMicroController arduinoMicroController;
+
+
+    //Package micromobility
+    private JourneyService localJourneyService;
     private PMVehicle pmVehicle;
-    private VehicleID vehicleID;
-    private  BufferedImage bufferedImage;
-    private StationID stationID;
-    private ServiceID serviceID;
+
+    //Package payment
     private Wallet wallet;
     private BigDecimal impAmount;
     private WalletPayment walletPayment;
 
 
     public JourneyRealizeHandler() {
-        journeyService=null;
+        localJourneyService =null;
     }
 
     public void scanQR()
@@ -49,8 +66,6 @@ public class JourneyRealizeHandler {
         this.vehicleID = qrDecoder.getVehicleID(this.bufferedImage); //VehicleId
         server.checkPMVAvail(vehicleID);
 
-        this.journeyService = new JourneyService();
-
         arduinoMicroController.setBTconnection();
 
         GeographicPoint loc = pmVehicle.getGeographicPoint();
@@ -60,7 +75,7 @@ public class JourneyRealizeHandler {
         pmVehicle.setNotAvailb();
         pmVehicle.setUserAccount(userAccount); //Pas de vinculacio entre vehicle i usuari
 
-        addValuesToNewJourneyService(date, loc, date.getHour(), userAccount, vehicleID); //Extract method
+        this.localJourneyService=new JourneyService(date,date.getHour(), loc, vehicleID,userAccount);
 
         server.registerPairing(userAccount, vehicleID, originStationID, loc, date);
     }
@@ -71,7 +86,7 @@ public class JourneyRealizeHandler {
     public void unPairVehicle() throws ConnectException, InvalidPairingArgsException, PairingNotFoundException, ProceduralException {
         StationID endStationID = this.stationID;
 
-        if (endStationID == null || pmVehicle.getState() != PMVState.UnderWay || !journeyService.isInProgress()) {
+        if (endStationID == null || pmVehicle.getState() != PMVState.UnderWay || !localJourneyService.isInProgress()) {
             throw new ProceduralException("Procedural exception");
         }
 
@@ -79,13 +94,12 @@ public class JourneyRealizeHandler {
 
         LocalDateTime endDate = LocalDateTime.now();
 
-        int duration = calculateDuration(journeyService.getInitDate(), endDate);
-        float distance = calculateDistance(journeyService.getOriginPoint(), endStationID.getLoc());
+        int duration = calculateDuration(localJourneyService.getInitDate(), endDate);
+        float distance = calculateDistance(localJourneyService.getOriginPoint(), endStationID.getLoc());
         float avSpeed = distance / (float) duration;
 
-        impAmount = calculateImport(duration, distance);
-
-        addValuesToFinishedJourneyService(endDate, endDate.getHour(), endPoint, distance, duration,avSpeed,impAmount, serviceID); //Extract method
+        calculateImport(duration, distance, avSpeed);
+        completeJourneyService(endDate, endDate.getHour(), endPoint, distance, duration,avSpeed,impAmount, serviceID);
 
         server.stopPairing(userAccount, vehicleID, stationID, endPoint, endDate, avSpeed, distance, duration, impAmount);
 
@@ -93,7 +107,7 @@ public class JourneyRealizeHandler {
         pmVehicle.setLocation(endPoint);
         pmVehicle.setUserAccount(null);
 
-        journeyService.setInProgress(false);
+        localJourneyService.setInProgress(false);
     }
 
 
@@ -106,17 +120,17 @@ public class JourneyRealizeHandler {
     // Input events from the Arduino microcontroller channel
     public void startDriving()
             throws ConnectException, ProceduralException, PMVPhisicalException {
-        if (pmVehicle.getState() != PMVState.NotAvailable || journeyService == null) {
+        if (pmVehicle.getState() != PMVState.NotAvailable || localJourneyService == null) {
             throw new ProceduralException("Procedural exception");
         }
         arduinoMicroController.startDriving();
         pmVehicle.setUnderWay();
-        journeyService.setInProgress(true);
+        localJourneyService.setInProgress(true);
     }
 
     public void stopDriving()
             throws ConnectException, ProceduralException, PMVPhisicalException {
-        if (pmVehicle.getState() != PMVState.UnderWay || !journeyService.isInProgress()) {
+        if (pmVehicle.getState() != PMVState.UnderWay || !localJourneyService.isInProgress()) {
             throw new ProceduralException("Procedural exception");
         }
         arduinoMicroController.stopDriving();
@@ -156,12 +170,12 @@ public class JourneyRealizeHandler {
         return this.pmVehicle.getState();
     }
 
-    public JourneyService getJourneyService() {
-        return this.journeyService;
+    public JourneyService getLocalJourneyService() {
+        return this.localJourneyService;
     }
 
-    public void setJourneyService(JourneyService journeyService){
-        this.journeyService=journeyService;
+    public void setLocalJourneyService(JourneyService localJourneyService){
+        this.localJourneyService = localJourneyService;
     }
 
     public void setImpAmount(BigDecimal impAmount){
@@ -175,34 +189,39 @@ public class JourneyRealizeHandler {
 
     //Internal operations
 
-    private void addValuesToNewJourneyService(LocalDateTime date, GeographicPoint loc, int hour, UserAccount userAccount, VehicleID vehicleID) {
-        journeyService.setInitDate(date);
-        journeyService.setOriginPoint(loc);
-        journeyService.setInitHour(hour);
-        journeyService.setUserAccount(userAccount);
-        journeyService.setVehicleID(vehicleID);
-    }
-    private void addValuesToFinishedJourneyService(LocalDateTime endDate, int hour, GeographicPoint endPoint, float distance, int duration, float avSpeed, BigDecimal imp, ServiceID serviceID) {
-        journeyService.setEndDate(endDate);
-        journeyService.setEndHour(hour);
-        journeyService.setEndPoint(endPoint);
-        journeyService.setDistance(distance);
-        journeyService.setDuration(duration);
-        journeyService.setAvgSpeed(avSpeed);
-        journeyService.setImportAmount(imp);
-        journeyService.setServiceID(serviceID);
+    private void completeJourneyService(LocalDateTime endDate, int hour, GeographicPoint endPoint, float distance, int duration, float avSpeed, BigDecimal imp, ServiceID serviceID) {
+        localJourneyService.setEndDate(endDate);
+        localJourneyService.setEndHour(hour);
+        localJourneyService.setEndPoint(endPoint);
+        localJourneyService.setDistance(distance);
+        localJourneyService.setDuration(duration);
+        localJourneyService.setAvgSpeed(avSpeed);
+        localJourneyService.setImportAmount(imp);
+        localJourneyService.setServiceID(serviceID);
     }
     private int calculateDuration(LocalDateTime startTime, LocalDateTime endTime) {
         return (int) ChronoUnit.MILLIS.between(startTime, endTime); //Ho fem amb milisegons pq si la unitat son segons (o alguna més gran), serà 0 en temps d'execucio, per tant, saltarà invalidPairingArgsException
     }
 
-    private BigDecimal calculateImport(int duration, float distance) {
-        BigDecimal durationPrice = BigDecimal.valueOf(duration);
-        BigDecimal distancePrice = BigDecimal.valueOf(distance);
-        return durationPrice.add(distancePrice); //Per simplificar, l'import és la suma de la durada i la distància
+    private void calculateImport(int duration, float distance, float avSpeed) {
+        BigDecimal durationPrice = BigDecimal.valueOf(duration).multiply(PRICETIME);
+        BigDecimal distancePrice = BigDecimal.valueOf(distance).max(PRICEDISTANCE);
+        BigDecimal total = durationPrice.add(distancePrice);
+
+        //Weekend discount
+        DayOfWeek dayOfWeek = LocalDateTime.now().getDayOfWeek();
+        if (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY) {
+            total = total.subtract(total.multiply(DISCOUNT_PERCENTAGE));
+        }
+
+        //Speed limit
+        if (avSpeed > SPEED_LIMIT) {
+            total = total.add(total.multiply(FINE_PERCENTAGE));
+        }
+        this.impAmount=total;
     }
 
-    public  Float calculateDistance(GeographicPoint point1, GeographicPoint point2) {
+    private  Float calculateDistance(GeographicPoint point1, GeographicPoint point2) {
         double lat1Rad = Math.toRadians(point1.getLatitude());
         double lon1Rad = Math.toRadians(point1.getLongitude());
         double lat2Rad = Math.toRadians(point2.getLatitude());
@@ -211,7 +230,7 @@ public class JourneyRealizeHandler {
         double deltaLat = lat2Rad - lat1Rad;
         double deltaLon = lon2Rad - lon1Rad;
 
-        // Fórmula de Haversine
+        //Haversine
         double a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2)
                 + Math.cos(lat1Rad) * Math.cos(lat2Rad)
                 * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
@@ -223,7 +242,9 @@ public class JourneyRealizeHandler {
         return (float) distance;
     }
 
-    //Injeccio de dependències
+
+
+    //Setters for injecting dependencies
     public void setQrDecoder(QRDecoder qrDecoder) {
         this.qrDecoder = qrDecoder;
     }
@@ -243,7 +264,6 @@ public class JourneyRealizeHandler {
     public void setArduinoMicroController(ArduinoMicroController arduinoMicroController) {
         this.arduinoMicroController = arduinoMicroController;
     }
-
     public void setPmVehicle(PMVehicle pmVehicle) {
         this.pmVehicle = pmVehicle;
     }
