@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import services.Server;
 import services.ServerDouble;
-import services.ServerDoubleFail;
 import services.smartfeatures.*;
 
 import javax.imageio.ImageIO;

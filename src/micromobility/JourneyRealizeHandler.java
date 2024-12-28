@@ -122,7 +122,7 @@ public class JourneyRealizeHandler {
         arduinoMicroController.stopDriving();
     }
 
-    public void selectPaymentMethod(char opt) throws NotEnoughWalletException, ProceduralException {
+    public void selectPaymentMethod(char opt) throws NotEnoughWalletException, ProceduralException, InvalidPaymentArgsException {
         if(!pmVehicle.getState().equals(PMVState.Available)){
             throw new ProceduralException("Procedural exception");
         }

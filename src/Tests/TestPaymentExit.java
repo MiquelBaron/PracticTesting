@@ -26,7 +26,6 @@ public class TestPaymentExit {
     PMVehicle pmVehicle;
     UserAccount userAccount;
     GeographicPoint geographicPoint;
-
     StationID initStation;
     StationID endStation;
     Wallet wallet;
@@ -72,32 +71,32 @@ public class TestPaymentExit {
         journeyRealizeHandler.unPairVehicle();
 
         journeyRealizeHandler.setImpAmount(impAmount);
-        option = 0;
+        option = 'W';
 
     }
 
     @Test
-    public void testPaymentInstanceIsCreated() throws NotEnoughWalletException, ProceduralException {
+    public void testPaymentInstanceIsCreated() throws NotEnoughWalletException, ProceduralException, InvalidPaymentArgsException {
         journeyRealizeHandler.selectPaymentMethod(option);
         assertNotNull(journeyRealizeHandler.getWalletPayment());
     }
 
     @Test
-    public void testPaymentImportIsModified() throws NotEnoughWalletException, ProceduralException {
+    public void testPaymentImportIsModified() throws NotEnoughWalletException, ProceduralException, InvalidPaymentArgsException {
         journeyRealizeHandler.selectPaymentMethod(option);
         WalletPayment walletPayment = journeyRealizeHandler.getWalletPayment();
         assertEquals(impAmount,walletPayment.getImpAmount());
     }
 
     @Test
-    public void testPaymentIsVinculatedWithJourneyService() throws NotEnoughWalletException, ProceduralException {
+    public void testPaymentIsVinculatedWithJourneyService() throws NotEnoughWalletException, ProceduralException, InvalidPaymentArgsException {
         journeyRealizeHandler.selectPaymentMethod(option);
         WalletPayment walletPayment = journeyRealizeHandler.getWalletPayment();
         assertEquals(serviceID,walletPayment.getServiceID());
     }
 
     @Test
-    public void testWalletBalanceIsModified() throws NotEnoughWalletException, ProceduralException {
+    public void testWalletBalanceIsModified() throws NotEnoughWalletException, ProceduralException, InvalidPaymentArgsException {
         BigDecimal expectedBalance=new BigDecimal(150);
         journeyRealizeHandler.selectPaymentMethod(option);
         assertEquals(expectedBalance,wallet.getBalance());

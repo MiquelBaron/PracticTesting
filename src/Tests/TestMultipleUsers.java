@@ -26,12 +26,12 @@ public class TestMultipleUsers {
     PMVehicle pmVehicle2;
     UserAccount user1;
     UserAccount user2;
-    UserAccount user3;
     GeographicPoint geographicPoint;
     StationID initStation;
     StationID endStation1;
     StationID endStation2;
     QRDecoder qrDecoder2;
+    QRDecoder qrDecoder;
 
 
     @BeforeEach
@@ -45,13 +45,12 @@ public class TestMultipleUsers {
 
         user1 = new UserAccount("1");
         user2 = new UserAccount("2");
-        user3 = new UserAccount("3");
 
         geographicPoint = new GeographicPoint(10, 10);
 
 
         ArduinoMicroController arduinoMicroController = new ArduinoMicroControllerDoubleExit();
-        QRDecoder qrDecoder = new QRDecoderDoubleExit(vehicleID1);
+        qrDecoder = new QRDecoderDoubleExit(vehicleID1);
         qrDecoder2 = new QRDecoderDoubleExit(vehicleID2);
         Server server = new ServerDouble(false);
         UnbondedBTSignal unbondedBTSignal = new UnbondedBTSignalDoubleExit();

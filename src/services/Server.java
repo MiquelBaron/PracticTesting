@@ -1,6 +1,7 @@
 package services;
 import data.*;
 import exceptions.InvalidPairingArgsException;
+import exceptions.InvalidPaymentArgsException;
 import exceptions.PMVNotAvailException;
 import exceptions.PairingNotFoundException;
 
@@ -27,5 +28,5 @@ public interface Server {
                             date);
     void unPairRegisterService(UserAccount user, VehicleID veh, StationID st, GeographicPoint loc, LocalDateTime date) throws PairingNotFoundException;
     void registerLocation(VehicleID veh, StationID st);
-    void registerPayment(ServiceID serviceID, UserAccount userAccount, BigDecimal imp, char payMeth);
+    void registerPayment(ServiceID serviceID, UserAccount userAccount, BigDecimal imp, char payMeth) throws InvalidPaymentArgsException;
 }

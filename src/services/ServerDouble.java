@@ -16,6 +16,7 @@ public class ServerDouble implements Server{
     private Map<UserAccount, VehicleID> pairings; //Registered users with vehicle associated
     private Map<VehicleID, StationID> vehicleLocation;
     private final List<StationID> stations; //Registered stations
+    private Map<ServiceID, BigDecimal> payments;
     private final boolean connectException; //If true, throws new ConnectException
 
     public ServerDouble(boolean connectException){
@@ -34,6 +35,7 @@ public class ServerDouble implements Server{
         stations.add(new StationID("2", new GeographicPoint(20,20)));
         stations.add(new StationID("3", new GeographicPoint(30,30)));
 
+        payments=new HashMap<>();
 
         this.vehicleLocation = new HashMap<>();
 
@@ -73,7 +75,7 @@ public class ServerDouble implements Server{
             throw new InvalidPairingArgsException("Invalid pairing arguments");
         }
         if(!vehicles.containsKey(veh) || !pairings.containsKey(user) || !pairings.get(user).equals(veh)){
-            throw new InvalidPairingArgsException("Vehicle does not exists");
+            throw new PairingNotFoundException("Pairing not found");
         }
 
         unPairRegisterService(user,veh,st,loc,date);
@@ -81,8 +83,11 @@ public class ServerDouble implements Server{
     }
 
     @Override
-    public void registerPayment(ServiceID serviceID, UserAccount userAccount, BigDecimal imp, char payMeth) {
-
+    public void registerPayment(ServiceID serviceID, UserAccount userAccount, BigDecimal imp, char payMeth) throws InvalidPaymentArgsException {
+        if(userAccount==null || !pairings.containsKey(userAccount) || imp==null || payMeth =='\u0000'){
+            throw new InvalidPaymentArgsException("Invalid payment args");
+        }
+        payments.put(serviceID,imp);
     }
 
 

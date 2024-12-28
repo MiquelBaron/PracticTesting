@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import services.Server;
 import services.ServerDouble;
-import services.ServerDoubleFail;
 import services.smartfeatures.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -56,7 +55,7 @@ public class TestUnPairVehicleFail {
         journeyRealizeHandler.scanQR();
         journeyRealizeHandler.startDriving();
 
-        journeyRealizeHandler.setServer(new ServerDoubleFail());
+        journeyRealizeHandler.setServer(new ServerDouble(false));
     }
 
     @Test
@@ -76,7 +75,7 @@ public class TestUnPairVehicleFail {
     public void testPairingNotFoundException() throws ConnectException, ProceduralException, PMVPhisicalException {
         journeyRealizeHandler.broadcastStationID(endStation);
         journeyRealizeHandler.stopDriving();
-        journeyRealizeHandler.setUserAccount(new UserAccount("2"));
+        journeyRealizeHandler.setUserAccount(new UserAccount("5"));
         assertThrows(PairingNotFoundException.class,()-> journeyRealizeHandler.unPairVehicle());
     }
 
@@ -84,6 +83,7 @@ public class TestUnPairVehicleFail {
     public void testConnectException() throws ConnectException, ProceduralException, PMVPhisicalException {
         journeyRealizeHandler.broadcastStationID(endStation);
         journeyRealizeHandler.stopDriving();
+        journeyRealizeHandler.setServer(new ServerDouble(true));
         assertThrows(ConnectException.class, ()-> journeyRealizeHandler.unPairVehicle());
     }
 
