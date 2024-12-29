@@ -1,4 +1,5 @@
 import data.*;
+import exceptions.*;
 import micromobility.JourneyRealizeHandler;
 import micromobility.PMVehicle;
 import micromobility.payment.Wallet;
@@ -7,112 +8,153 @@ import services.Server;
 import services.ServerDouble;
 import services.smartfeatures.*;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Scanner;
+import java.net.ConnectException;
 
 public class Main {
 
     JourneyRealizeHandler journeyRealizeHandler;
 
     public Main() throws IOException {
-
         init();
+        setupGUI();
+    }
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            boolean exit = false;
-            boolean[] actionsCompleted = new boolean[6]; // Track completed actions
+    public void setupGUI() {
+        JFrame frame = new JFrame("Micromobilidad compartida");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(500, 500);
+        frame.setLayout(new GridLayout(6, 1));
 
+        JButton scanQRButton = new JButton("Escanear QR");
+        JButton startDrivingButton = new JButton("Iniciar Conducción");
+        JButton stopDrivingButton = new JButton("Detener Conducción");
+        JButton unpairVehicleButton = new JButton("Desemparejar Vehículo");
+        JButton selectPaymentButton = new JButton("Seleccionar Método de Pago");
+        JButton exitButton = new JButton("Salir");
 
-            while (!exit) {
-                System.out.println("\nSeleccione una acción:");
-                System.out.println("1. Escanear QR");
-                System.out.println("2. Iniciar conducción");
-                System.out.println("3. Detener conducción");
-                System.out.println("4. Desemparejar vehículo");
-                System.out.println("5. Seleccionar método de pago");
-                System.out.println("6. Salir");
-                System.out.print("Opción: ");
+        boolean[] actionsCompleted = new boolean[5];
 
-                int option = scanner.nextInt();
-                scanner.nextLine(); // Consumir el salto de línea
+        scanQRButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    StationID originStation = new StationID("1", new GeographicPoint(10, 10));
+                    journeyRealizeHandler.broadcastStationID(originStation);
+                    journeyRealizeHandler.scanQR();
 
-                switch (option) {
-                    case 1:
-                        StationID originStation = new StationID("1", new GeographicPoint(10, 10));
-                        journeyRealizeHandler.broadcastStationID(originStation);
-                        System.out.println("ID de estación de origen recibida automáticamente.");
-                        journeyRealizeHandler.scanQR();
+                    StationID endStation = new StationID("2", new GeographicPoint(20, 20));
+                    journeyRealizeHandler.broadcastStationID(endStation);
 
-
-                        actionsCompleted[0] = true;
-                        System.out.println("QR escaneado.");
-                        break;
-                    case 2:
-                        if (!actionsCompleted[0]) {
-                            System.out.println("Debe completar la acción 1 antes de continuar.");
-                        } else {
-                            journeyRealizeHandler.startDriving();
-                            actionsCompleted[1] = true;
-                            System.out.println("Conducción iniciada.");
-                        }
-                        break;
-                    case 3:
-                        if (!actionsCompleted[1]) {
-                            System.out.println("Debe completar la acción 2 antes de continuar.");
-                        } else {
-                            StationID endStation = new StationID("5", new GeographicPoint(10.00000001f,10.0000001f));
-                            journeyRealizeHandler.broadcastStationID(endStation);
-                            System.out.println("ID de estación de destino recibida automáticamente.");
-                            journeyRealizeHandler.stopDriving();
-                            actionsCompleted[2] = true;
-                            System.out.println("Conducción detenida.");
-                        }
-                        break;
-                    case 4:
-                        if (!actionsCompleted[2]) {
-                            System.out.println("Debe completar la acción 3 antes de continuar.");
-                        } else {
-                            journeyRealizeHandler.unPairVehicle();
-                            actionsCompleted[3] = true;
-                            System.out.println("Vehículo desemparejado.");
-                        }
-                        break;
-                    case 5:
-                        if (!actionsCompleted[3]) {
-                            System.out.println("Debe completar la acción 4 antes de continuar.");
-                        } else {
-                            System.out.print("Seleccione el método de pago (W para Wallet): ");
-                            char paymentMethod = scanner.nextLine().charAt(0);
-                            System.out.println("Desea proceder al pago?");
-                            String response = scanner.nextLine();
-
-                            while(!response.equalsIgnoreCase("si")){
-                                System.out.println("Debe realizar el pago para poder completar el proceso! Quiere proceder al pago?");
-                                response = scanner.nextLine();
-                            }
-                            journeyRealizeHandler.selectPaymentMethod(paymentMethod);
-                            actionsCompleted[4] = true;
-                            System.out.println("Pago realizado. Se le ha reducido de su balance "+journeyRealizeHandler.getImpAmount()+" unidades monetarias");
-                            journeyRealizeHandler.undoBtConnection();
-                        }
-                        break;
-
-                    case 6:
-                        exit = true;
-                        System.out.println("Saliendo del programa...");
-                        break;
-                    default:
-                        System.out.println("Opción no válida, intente nuevamente.");
+                    actionsCompleted[0] = true;
+                    JOptionPane.showMessageDialog(frame, "QR escaneado y estaciones configuradas automáticamente.");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(frame, "Error al escanear QR: " + ex.getMessage());
                 }
             }
+        });
 
-        } catch (Exception e) {
-            System.out.println("Error durante la ejecución: " + e.getMessage());
-        }
+        startDrivingButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!actionsCompleted[0]) {
+                    JOptionPane.showMessageDialog(frame, "Debe escanear el QR antes de iniciar conducción.");
+                } else {
+                    try {
+                        journeyRealizeHandler.startDriving();
+                    } catch (ConnectException | ProceduralException | PMVPhisicalException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    actionsCompleted[1] = true;
+                    JOptionPane.showMessageDialog(frame, "Conducción iniciada.");
+                }
+            }
+        });
+
+        stopDrivingButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!actionsCompleted[1]) {
+                    JOptionPane.showMessageDialog(frame, "Debe iniciar conducción antes de detenerla.");
+                } else {
+                    try {
+                        journeyRealizeHandler.stopDriving();
+                    } catch (ConnectException | ProceduralException | PMVPhisicalException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    actionsCompleted[2] = true;
+                    JOptionPane.showMessageDialog(frame, "Conducción detenida.");
+                }
+            }
+        });
+
+        unpairVehicleButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!actionsCompleted[2]) {
+                    JOptionPane.showMessageDialog(frame, "Debe detener la conducción antes de desemparejar el vehículo.");
+                } else {
+                    try {
+                        journeyRealizeHandler.unPairVehicle();
+                    } catch (ConnectException | InvalidPairingArgsException | PairingNotFoundException |
+                             ProceduralException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    actionsCompleted[3] = true;
+                    JOptionPane.showMessageDialog(frame, "Vehículo desemparejado.");
+                }
+            }
+        });
+
+        selectPaymentButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!actionsCompleted[3]) {
+                    JOptionPane.showMessageDialog(frame, "Debe desemparejar el vehículo antes de seleccionar el método de pago.");
+                } else {
+                    String paymentMethod = JOptionPane.showInputDialog(frame, "Seleccione el método de pago (W para Wallet):");
+                    if (paymentMethod != null && !paymentMethod.isEmpty()) {
+                        try {
+                            journeyRealizeHandler.selectPaymentMethod(paymentMethod.charAt(0));
+                        } catch (NotEnoughWalletException | ProceduralException | InvalidPaymentArgsException ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        actionsCompleted[4] = true;
+
+                        // Simular el cálculo del importe del pago
+                        BigDecimal paymentAmount = journeyRealizeHandler.getImpAmount();
+                        BigDecimal roundedAmount = paymentAmount.setScale(2, BigDecimal.ROUND_HALF_UP); //Només agafem 2 decimals
+
+                        JOptionPane.showMessageDialog(frame, "Pago realizado. Importe: " + roundedAmount + "unidades monetarias.");
+                    }
+                }
+            }
+        });
+
+        exitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(frame, "Saliendo del programa...");
+                System.exit(0);
+            }
+        });
+
+        frame.add(scanQRButton);
+        frame.add(startDrivingButton);
+        frame.add(stopDrivingButton);
+        frame.add(unpairVehicleButton);
+        frame.add(selectPaymentButton);
+        frame.add(exitButton);
+
+        frame.setVisible(true);
     }
 
     public void init() throws IOException {
@@ -139,9 +181,9 @@ public class Main {
         journeyRealizeHandler.setBufferedImage(bufferedImage);
         journeyRealizeHandler.setPmVehicle(pmVehicle);
         journeyRealizeHandler.setUnbondedBTSignal(unbondedBTSignal);
+        journeyRealizeHandler.setServiceID(serviceID);
         journeyRealizeHandler.setQrDecoder(qrDecoder);
         journeyRealizeHandler.setArduinoMicroController(arduinoMicroController);
-        journeyRealizeHandler.setServiceID(serviceID);
         journeyRealizeHandler.setWallet(wallet);
     }
 
