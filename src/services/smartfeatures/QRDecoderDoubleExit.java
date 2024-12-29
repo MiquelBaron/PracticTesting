@@ -17,7 +17,4 @@ public class QRDecoderDoubleExit implements QRDecoder{
         return this.vehicleID;
     }
 
-    public void setVehicleID(VehicleID vehicleID){
-        this.vehicleID=vehicleID;
-    }
 }
