@@ -78,7 +78,7 @@ public class ServerDouble implements Server{
             throws InvalidPairingArgsException, ConnectException, PairingNotFoundException {
         if(serverError){throw new ConnectException();}
 
-        if(user==null || veh==null || st==null || st.getLoc()==null|| loc==null || date==null || avSp<=0.0 || dist<=0.0 || imp==null){
+        if(user==null || veh==null || st==null || st.getLoc()==null|| loc==null || date==null || imp==null){
             throw new InvalidPairingArgsException("Invalid pairing arguments");
         }
         if(!vehicles.containsKey(veh) || !pairings.containsKey(user) || !pairings.get(user).equals(veh)){

@@ -2,6 +2,8 @@ package micromobility;
 
 import data.*;
 import exceptions.*;
+import micromobility.calculators.DistanceCalculator;
+import micromobility.calculators.ImportAmountCalculator;
 import micromobility.payment.*;
 import services.Server;
 import services.smartfeatures.ArduinoMicroController;
@@ -94,11 +96,11 @@ public class JourneyRealizeHandler {
 
         LocalDateTime endDate = LocalDateTime.now();
 
-        int duration = calculateDuration(localJourneyService.getInitDate(), endDate);
-        float distance = calculateDistance(localJourneyService.getOriginPoint(), endStationID.getLoc());
+        int duration = calculateDuration(localJourneyService.getInitDate(), endDate); //Refactoring extract method
+        float distance = DistanceCalculator.calculateDistance(localJourneyService.getOriginPoint(), endStationID.getLoc()); //Refactoring extract class
         float avSpeed = distance / (float) duration;
 
-        calculateImport(duration, distance, avSpeed);
+        this.impAmount = ImportAmountCalculator.calculateImport(duration, distance, avSpeed); //Refactoring extract class
         completeJourneyService(endDate, endDate.getHour(), endPoint, distance, duration,avSpeed,impAmount, serviceID);
 
         server.stopPairing(userAccount, vehicleID, stationID, endPoint, endDate, avSpeed, distance, duration, impAmount);
@@ -109,8 +111,6 @@ public class JourneyRealizeHandler {
 
         localJourneyService.setInProgress(false);
     }
-
-
 
     public void broadcastStationID(StationID stID) throws ConnectException {
         unbondedBTSignal.BTbroadcast();
@@ -141,7 +141,8 @@ public class JourneyRealizeHandler {
             throw new ProceduralException("Procedural exception");
         }
         realizePayment(this.impAmount);
-        server.registerPayment(serviceID, userAccount,impAmount,opt);
+        server.registerPayment(serviceID, userAccount, impAmount, opt);
+
     }
 
     public void realizePayment(BigDecimal imp) throws NotEnoughWalletException {
@@ -182,6 +183,9 @@ public class JourneyRealizeHandler {
         this.impAmount=impAmount;
     }
     public WalletPayment getWalletPayment(){ return this.walletPayment;}
+    public BigDecimal getImpAmount(){
+        return this.impAmount;
+    }
 
 
 
@@ -203,44 +207,7 @@ public class JourneyRealizeHandler {
         return (int) ChronoUnit.MILLIS.between(startTime, endTime); //Ho fem amb milisegons pq si la unitat son segons (o alguna més gran), serà 0 en temps d'execucio, per tant, saltarà invalidPairingArgsException
     }
 
-    private void calculateImport(int duration, float distance, float avSpeed) {
-        BigDecimal durationPrice = BigDecimal.valueOf(duration).multiply(PRICETIME);
-        BigDecimal distancePrice = BigDecimal.valueOf(distance).max(PRICEDISTANCE);
-        BigDecimal total = durationPrice.add(distancePrice);
 
-        //Weekend discount
-        DayOfWeek dayOfWeek = LocalDateTime.now().getDayOfWeek();
-        if (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY) {
-            total = total.subtract(total.multiply(DISCOUNT_PERCENTAGE));
-        }
-
-        //Speed limit
-        if (avSpeed > SPEED_LIMIT) {
-            total = total.add(total.multiply(FINE_PERCENTAGE));
-        }
-        this.impAmount=total;
-    }
-
-    private  Float calculateDistance(GeographicPoint point1, GeographicPoint point2) {
-        double lat1Rad = Math.toRadians(point1.getLatitude());
-        double lon1Rad = Math.toRadians(point1.getLongitude());
-        double lat2Rad = Math.toRadians(point2.getLatitude());
-        double lon2Rad = Math.toRadians(point2.getLongitude());
-
-        double deltaLat = lat2Rad - lat1Rad;
-        double deltaLon = lon2Rad - lon1Rad;
-
-        //Haversine
-        double a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2)
-                + Math.cos(lat1Rad) * Math.cos(lat2Rad)
-                * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
-
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        double distance = EARTH_RADIUS_KM * c;
-
-        return (float) distance;
-    }
 
 
 
