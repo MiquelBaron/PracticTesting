@@ -2,7 +2,6 @@ import data.*;
 import micromobility.JourneyRealizeHandler;
 import micromobility.PMVehicle;
 import micromobility.payment.Wallet;
-import micromobility.payment.WalletPayment;
 import services.Server;
 import services.ServerDouble;
 import services.smartfeatures.*;
@@ -13,7 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Scanner;
-
 public class Main {
 
     JourneyRealizeHandler journeyRealizeHandler;
@@ -38,8 +36,7 @@ public class Main {
                 System.out.print("Opción: ");
 
                 int option = scanner.nextInt();
-                scanner.nextLine(); // Consumir el salto de línea
-
+                scanner.nextLine();
                 switch (option) {
                     case 1:
                         StationID originStation = new StationID("1", new GeographicPoint(10, 10));
